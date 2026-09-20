@@ -9,6 +9,14 @@ import cors from "cors";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import { GoogleGenAI, Type } from "@google/genai";
+import {
+  GEMINI_PRIMARY_MODEL,
+  GEMINI_TRIAGE_MODEL,
+  MODEL_DISPLAY_NAMES,
+  AI_OFFICER_NAME,
+  AI_INSPECTOR_NAME,
+  CIVIC_DEDUP_OFFICER,
+} from "./config/models.ts";
 
 dotenv.config();
 
@@ -429,7 +437,7 @@ export async function verifyID(imageBase64: string, mimeType: string = 'image/jp
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: GEMINI_PRIMARY_MODEL,
         contents: [
           {
             role: 'user',
@@ -519,7 +527,7 @@ Transcribe any provided native audio word-for-word, translate to English, assign
       });
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: GEMINI_TRIAGE_MODEL,
         contents: [{ role: 'user', parts }],
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
@@ -584,7 +592,7 @@ export async function verifyRepair(beforeImageBase64: string, afterImageBase64: 
   try {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: GEMINI_PRIMARY_MODEL,
       contents: [
         {
           role: 'user',
@@ -1627,7 +1635,7 @@ Return strictly a JSON object conforming to the required schema.
       try {
         const ai = getAI();
         const response = await ai.models.generateContent({
-          model: "gemini-3.8-flash",
+          model: GEMINI_PRIMARY_MODEL,
           contents: [
             {
               role: "user",
@@ -1865,7 +1873,7 @@ app.post(
               existing.dispatchLogs.push({
                 timestamp: new Date().toISOString().replace("T", " ").substring(0, 19) + " UTC",
                 note: `Corroborating report received within ${Math.round(dist)}m (${Math.round(sim * 100)}% semantic match). Upvoted municipal priority. Citizen: ${citizenName}.`,
-                officer: "Civic Deduplication Engine (Gemini 3.8 / Sovereign AI)",
+                officer: CIVIC_DEDUP_OFFICER,
               });
 
               // Broadcast update to real-time GIS dashboard
@@ -1978,7 +1986,7 @@ Return strictly a JSON object conforming to the required schema.
           try {
             const ai = getAI();
             const response = await ai.models.generateContent({
-              model: "gemini-3.8-flash",
+              model: GEMINI_TRIAGE_MODEL,
               contents: [{ role: "user", parts: promptParts }],
               config: {
                 responseMimeType: "application/json",
@@ -2039,25 +2047,53 @@ Return strictly a JSON object conforming to the required schema.
               const parsed = JSON.parse(response.text.trim());
               let validTranslation = parsed.englishTranslation || "";
 
+              // Helper function to deduplicate back-to-back concatenated identical phrases
+              const sanitizeDeduplicateString = (rawStr: string): string => {
+                if (!rawStr) return "";
+                let s = String(rawStr).trim().replace(/^["']|["']$/g, "").trim();
+                const half = Math.floor(s.length / 2);
+                const firstHalf = s.slice(0, half).trim();
+                const secondHalf = s.slice(half).trim();
+                if (firstHalf && secondHalf && firstHalf.toLowerCase() === secondHalf.toLowerCase()) {
+                  s = firstHalf;
+                }
+                return s;
+              };
+
+              let cleanTranscription = sanitizeDeduplicateString(parsed.transcription || typedComplaint || triageResult.transcription);
+              let cleanSummary = sanitizeDeduplicateString(parsed.summary || triageResult.summary);
+              let cleanTranslation = sanitizeDeduplicateString(parsed.englishTranslation || validTranslation);
+
               // Verify that englishTranslation is actually in English and not untranslated non-Latin script
-              const containsNonLatin = /[\u0900-\u097F\u0C00-\u0C7F\u0B80-\u0BFF\u0400-\u04FF\u4E00-\u9FFF]/.test(validTranslation);
-              if (!validTranslation || containsNonLatin || validTranslation === parsed.transcription) {
+              const containsNonLatin = /[\u0900-\u097F\u0C00-\u0C7F\u0B80-\u0BFF\u0400-\u04FF\u4E00-\u9FFF]/.test(cleanTranslation);
+              if (!cleanTranslation || containsNonLatin || cleanTranslation === cleanTranscription) {
                 const fallbackTriage = translateAndTriageCivicComplaint(
-                  parsed.transcription || typedComplaint,
+                  cleanTranscription || typedComplaint,
                   country,
                   language,
                   parsed.finalCategory || problemDomain,
                   location
                 );
-                validTranslation = fallbackTriage.englishTranslation;
+                cleanTranslation = sanitizeDeduplicateString(fallbackTriage.englishTranslation);
+              }
+
+              // State Deduplication: Prevent identical text strings from appearing under both Summary and Transcription
+              if (cleanSummary && cleanTranscription && cleanSummary.toLowerCase() === cleanTranscription.toLowerCase()) {
+                if (audioFile) {
+                  cleanTranscription = `Native Spoken Input: "${cleanTranscription}"`;
+                  cleanSummary = `Civic Hazard Assessment (${parsed.finalCategory || problemDomain || "Emergency"}): ${cleanSummary}`;
+                } else {
+                  cleanTranscription = `Citizen Description: "${cleanTranscription}"`;
+                  cleanSummary = `Municipal Dispatch Triage: ${cleanSummary}`;
+                }
               }
 
               triageResult = {
-                transcription: parsed.transcription || typedComplaint || triageResult.transcription,
-                englishTranslation: validTranslation || triageResult.englishTranslation,
+                transcription: cleanTranscription,
+                englishTranslation: cleanTranslation || triageResult.englishTranslation,
                 finalCategory: parsed.finalCategory || triageResult.finalCategory || problemDomain || "Infrastructure",
                 hazardPriorityScore: Math.min(5, Math.max(1, parseInt(parsed.hazardPriorityScore) || triageResult.hazardPriorityScore)),
-                summary: parsed.summary || triageResult.summary,
+                summary: cleanSummary,
                 recommendedDispatchUnit: parsed.recommendedDispatchUnit || triageResult.recommendedDispatchUnit,
               };
 
@@ -2116,7 +2152,7 @@ Return strictly a JSON object conforming to the required schema.
           {
             timestamp: new Date().toISOString().replace("T", " ").substring(0, 19) + " UTC",
             note: `AI Triage completed with Priority Score ${triageResult.hazardPriorityScore}/5. Categorized as ${triageResult.finalCategory}.`,
-            officer: "Civic AI Core (Gemini 3.8 / Sovereign AI)",
+            officer: AI_OFFICER_NAME,
           },
         ],
         embedding: embeddingVector,
@@ -2287,14 +2323,43 @@ app.post("/api/admin/login", (req: Request, res: Response) => {
 // API ROUTE 6.5: Google Maps Platform Configuration (/api/maps/config)
 // -------------------------------------------------------------
 app.get("/api/maps/config", (req: Request, res: Response) => {
-  const rawKey = (process.env.GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();
+  const rawKey = (
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.VITE_GOOGLE_MAPS_API_KEY ||
+    ""
+  ).trim();
   const rawMapId = (process.env.GOOGLE_MAPS_MAP_ID || "").trim();
-  const isValidKey = rawKey.startsWith("AIza") && rawKey.length >= 30;
+  const isValidKey = Boolean(rawKey && rawKey.length >= 8 && rawKey !== "YOUR_KEY_HERE");
   const validMapId = rawMapId && rawMapId !== "DEMO_MAP_ID" ? rawMapId : "";
   return res.json({
     hasKey: isValidKey,
     apiKey: isValidKey ? rawKey : "",
     mapId: validMapId,
+  });
+});
+
+// -------------------------------------------------------------
+// API ROUTE 6.6: Global App & Model Configuration (/api/config)
+// -------------------------------------------------------------
+app.get("/api/config", (req: Request, res: Response) => {
+  const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === "demo" || process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+  const rawKey = (
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.VITE_GOOGLE_MAPS_API_KEY ||
+    ""
+  ).trim();
+  return res.json({
+    demoMode: isDemo,
+    liveMode: !isDemo,
+    googleMapsApiKey: rawKey,
+    hasGoogleMapsKey: Boolean(rawKey && rawKey.length >= 8 && rawKey !== "YOUR_KEY_HERE"),
+    models: {
+      primary: GEMINI_PRIMARY_MODEL,
+      triage: GEMINI_TRIAGE_MODEL,
+      displayNames: MODEL_DISPLAY_NAMES,
+    },
   });
 });
 
@@ -2328,8 +2393,8 @@ app.post("/api/verify-repair", upload.fields([{ name: "beforeImage", maxCount: 1
         report.status = "Resolved";
         report.dispatchLogs.push({
           timestamp: new Date().toISOString().replace("T", " ").substring(0, 19) + " UTC",
-          note: `Gemini 2.5 Flash Automated Verification: Issue resolved with ${result.resolutionQualityScore}% quality score. ${result.verificationNotes}`,
-          officer: "Gemini 2.5 Flash Autonomous Inspector"
+          note: `Gemini 2.0 Flash Automated Verification: Issue resolved with ${result.resolutionQualityScore}% quality score. ${result.verificationNotes}`,
+          officer: AI_INSPECTOR_NAME,
         });
       }
       io.emit("statusUpdated", report);
@@ -2357,8 +2422,8 @@ app.get("/api/health", (req: Request, res: Response) => {
   return res.json({
     status: "ok",
     app: "CYPHER - BRICS+ Civic AI Platform",
-    aiModel: "gemini-3.8-flash",
-    aiEngine: isGeminiAvailable() ? "Gemini 3.8 Flash (Active)" : "Sovereign Autonomous Engine (Active)",
+    aiModel: GEMINI_PRIMARY_MODEL,
+    aiEngine: isGeminiAvailable() ? "Gemini 2.0 Flash (Active)" : "Sovereign Autonomous Engine (Active)",
     activeReports: reportsStore.length,
     gisGeoPoints: reportsStore.filter((r) => r.lat && r.lng).length,
     cacheService: {

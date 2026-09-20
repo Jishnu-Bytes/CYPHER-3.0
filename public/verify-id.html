@@ -85,7 +85,7 @@
         </h1>
       </a>
       <span class="hidden md:inline-block text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-        <span data-i18n="onlineStatus">Gemini-3.8-Flash Online</span>
+        <span data-i18n="onlineStatus">Gemini-2.0-Flash Online</span>
       </span>
     </div>
 
@@ -185,7 +185,7 @@
             <span data-i18n="verifyTitle">Citizen Identity Document Verification</span>
           </h1>
           <p class="text-xs text-slate-400 mt-1" data-i18n="verifySubtitle">
-            Upload your official government document. Gemini 3.8 Flash verifies authenticity and omits all sensitive identification digits.
+            Upload your official government document. Gemini 2.0 Flash verifies authenticity and omits all sensitive identification digits.
           </p>
         </div>
 
@@ -356,9 +356,11 @@
           </button>
           <button 
             type="button" 
+            id="btn-simulate-liveness"
             onclick="simulateLivenessPass()" 
-            class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-mono border border-slate-800 flex items-center gap-1.5 transition"
+            class="sandbox-control px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-mono border border-slate-800 flex items-center gap-1.5 transition"
             title="Simulate biometric liveness pass for test sandbox"
+            data-sandbox="true"
           >
             <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
             <span>Simulate 2s Pass (Sandbox)</span>
@@ -397,7 +399,7 @@
         </div>
 
         <div class="space-y-2 text-xs font-mono">
-          <div class="text-slate-400" data-i18n="geminiLogLabel">Gemini 3.8 Verification Log:</div>
+          <div class="text-slate-400" data-i18n="geminiLogLabel">Gemini 2.0 Flash Verification Log:</div>
           <p id="res-reasoning" class="text-slate-300 bg-slate-900 p-3 rounded-xl border border-slate-800 leading-relaxed"></p>
         </div>
 
@@ -744,8 +746,18 @@
 
       } catch(err) {
         console.warn("Webcam access notice:", err);
-        alert("Camera access unavailable in this browser sandbox. Using high-fidelity 2-Second Liveness Simulator.");
-        simulateLivenessPass();
+        if (window.CYPHER_DEMO_MODE) {
+          simulateLivenessPass();
+        } else {
+          const badge = document.getElementById('liveness-badge');
+          if (badge) {
+            badge.className = "px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30";
+            badge.textContent = "CAMERA PERMISSION REQUIRED";
+          }
+          if (typeof showToast === 'function') {
+            showToast("Camera access required for live biometric verification. Please allow camera permissions.", "error");
+          }
+        }
       }
     }
 

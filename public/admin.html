@@ -11,6 +11,17 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Maps Platform Global Error Interceptor & Resilient Loader -->
   <script>
+    // Cleanly catch and suppress Google Maps alert modals (e.g. "This page can't load Google Maps correctly")
+    const _origAlert = window.alert;
+    window.alert = function(msg) {
+      if (typeof msg === 'string' && (msg.includes("Google Maps") || msg.includes("can't load Google Maps correctly") || msg.includes("ApiProjectMapError"))) {
+        console.warn("[CYPHER GIS Interceptor] Caught Google Maps alert modal cleanly without modal popup interruption:", msg);
+        if (window.gm_authFailure) window.gm_authFailure();
+        return;
+      }
+      return _origAlert.apply(this, arguments);
+    };
+
     // Global Google Maps Authentication & Project Error Interceptor (Catches ApiProjectMapError)
     window.gm_authFailure = function() {
       console.warn("[CYPHER GIS] Google Maps Platform authorization notice (ApiProjectMapError): Active key lacks Maps JavaScript API activation or project billing. Seamlessly switching to High-Precision Sovereign Cartographic Engine.");
@@ -666,7 +677,7 @@
           <!-- AI Verification Quality Score & Notes -->
           <div id="modal-verify-results" class="p-3 rounded-lg bg-slate-900/80 border border-slate-800 space-y-2">
             <div class="flex items-center justify-between">
-              <span class="text-[11px] text-slate-400 font-mono">Gemini 2.5 Flash Quality Score:</span>
+              <span class="text-[11px] text-slate-400 font-mono">Gemini 2.0 Flash Quality Score:</span>
               <span id="modal-quality-score-text" class="text-sm font-bold font-mono text-slate-300">--%</span>
             </div>
             <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
@@ -681,7 +692,7 @@
           <div class="pt-1">
             <button id="btn-verify-repair" onclick="triggerRepairVerification()" class="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-mono font-bold text-xs shadow-lg shadow-emerald-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer">
               <i class="fa-solid fa-brain"></i>
-              <span>Verify Repair with Gemini 2.5 Flash</span>
+              <span>Verify Repair with Gemini 2.0 Flash</span>
             </button>
           </div>
         </div>
@@ -1001,9 +1012,37 @@
       document.getElementById('modal-location').textContent = rep.location;
       document.getElementById('modal-category').textContent = `${rep.problemDomain || rep.finalCategory} Emergency (${rep.finalCategory})`;
       document.getElementById('modal-dispatch-unit').textContent = rep.recommendedDispatchUnit;
-      document.getElementById('modal-summary').textContent = `"${rep.summary}"`;
-      document.getElementById('modal-transcription').textContent = `"${rep.transcription}"`;
-      document.getElementById('modal-translation').textContent = rep.englishTranslation;
+      
+      // Sanitize and deduplicate strings
+      function sanitizeDeduplicate(raw) {
+        if (!raw) return '';
+        let s = String(raw).trim().replace(/^["']|["']$/g, '').trim();
+        const half = Math.floor(s.length / 2);
+        const first = s.slice(0, half).trim();
+        const second = s.slice(half).trim();
+        if (first && second && first.toLowerCase() === second.toLowerCase()) {
+          s = first;
+        }
+        return s;
+      }
+
+      let cleanSummary = sanitizeDeduplicate(rep.summary || rep.actionableSummary);
+      let cleanTranscription = sanitizeDeduplicate(rep.transcription || rep.originalTranscript);
+      let cleanTranslation = sanitizeDeduplicate(rep.englishTranslation);
+
+      if (cleanSummary && cleanTranscription && cleanSummary.toLowerCase() === cleanTranscription.toLowerCase()) {
+        if (rep.hasAudio) {
+          cleanTranscription = `Citizen Voice Memo: "${cleanTranscription}"`;
+          cleanSummary = `Civic Hazard Triage (${rep.finalCategory || 'Infrastructure'}): ${cleanSummary}`;
+        } else {
+          cleanTranscription = `Citizen Written Report: "${cleanTranscription}"`;
+          cleanSummary = `Municipal Dispatch Triage: ${cleanSummary}`;
+        }
+      }
+
+      document.getElementById('modal-summary').textContent = cleanSummary.startsWith('"') ? cleanSummary : `"${cleanSummary}"`;
+      document.getElementById('modal-transcription').textContent = cleanTranscription.startsWith('"') ? cleanTranscription : `"${cleanTranscription}"`;
+      document.getElementById('modal-translation').textContent = cleanTranslation;
 
       const banner = document.getElementById('modal-priority-banner');
       const scoreBadge = document.getElementById('modal-score-badge');
@@ -1061,7 +1100,7 @@
         scoreBar.className = isPassed ? "h-full bg-emerald-500 transition-all duration-500" : "h-full bg-amber-500 transition-all duration-500";
         scoreText.textContent = `${rep.resolutionQualityScore}%`;
         scoreText.className = isPassed ? "text-sm font-bold font-mono text-emerald-400" : "text-sm font-bold font-mono text-amber-400";
-        notesText.textContent = rep.verificationNotes || "Gemini 2.5 Flash Autonomous Inspection: Repair work meets municipal quality and structural safety parameters.";
+        notesText.textContent = rep.verificationNotes || "Gemini 2.0 Flash Autonomous Inspection: Repair work meets municipal quality and structural safety parameters.";
       } else {
         resolutionBadge.textContent = "Awaiting Verification";
         resolutionBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border bg-slate-900 text-slate-400 border-slate-700";
@@ -1069,7 +1108,7 @@
         scoreBar.className = "h-full bg-slate-600 transition-all duration-500";
         scoreText.textContent = "--%";
         scoreText.className = "text-sm font-bold font-mono text-slate-400";
-        notesText.textContent = "Click 'Verify Repair with Gemini 2.5 Flash' to trigger automated multimodal image comparison between hazard and resolution.";
+        notesText.textContent = "Click 'Verify Repair with Gemini 2.0 Flash' to trigger automated multimodal image comparison between hazard and resolution.";
       }
 
       document.getElementById('detail-modal').classList.remove('hidden');
@@ -1099,7 +1138,7 @@
       const btn = document.getElementById('btn-verify-repair');
       const originalText = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Gemini 2.5 Flash Inspecting Photos...</span>`;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Gemini 2.0 Flash Inspecting Photos...</span>`;
 
       try {
         const beforePhoto = activeSelectedReport.preRepairPhotoUrl || activeSelectedReport.photoBase64 || "";

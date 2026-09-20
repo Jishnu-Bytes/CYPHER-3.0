@@ -3,7 +3,7 @@
  * Shared Utilities: Demo Mode Failsafe, Canvas Image Compression, & Responsive Guards
  */
 
-// 1. DEMO MODE MANAGEMENT
+// 1. DEMO MODE MANAGEMENT & SANDBOX UI VISIBILITY
 window.CYPHER_DEMO_MODE = (function() {
   try {
     const saved = localStorage.getItem('cypher_demo_mode');
@@ -12,16 +12,54 @@ window.CYPHER_DEMO_MODE = (function() {
   return false;
 })();
 
+function applySandboxVisibility() {
+  const isDemo = Boolean(window.CYPHER_DEMO_MODE);
+  let styleTag = document.getElementById('cypher-sandbox-style');
+  if (!styleTag) {
+    styleTag = document.createElement('style');
+    styleTag.id = 'cypher-sandbox-style';
+    document.head.appendChild(styleTag);
+  }
+  if (!isDemo) {
+    styleTag.innerHTML = `
+      .sandbox-control, [data-sandbox="true"], #btn-simulate-liveness, #simulation-sample-container {
+        display: none !important;
+      }
+    `;
+  } else {
+    styleTag.innerHTML = '';
+  }
+}
+
+// Fetch server config on initialization to synchronize live/demo mode environment
+(async function syncServerConfig() {
+  try {
+    const res = await fetch('/api/config');
+    if (res.ok) {
+      const cfg = await res.json();
+      const saved = localStorage.getItem('cypher_demo_mode');
+      if (saved === null && typeof cfg.demoMode === 'boolean') {
+        window.CYPHER_DEMO_MODE = cfg.demoMode;
+      }
+      applySandboxVisibility();
+      renderDemoBadge();
+    }
+  } catch(e) {
+    applySandboxVisibility();
+  }
+})();
+
 function setDemoMode(active) {
   window.CYPHER_DEMO_MODE = !!active;
   try {
     localStorage.setItem('cypher_demo_mode', String(window.CYPHER_DEMO_MODE));
   } catch(e) {}
+  applySandboxVisibility();
   renderDemoBadge();
   showToast(
     window.CYPHER_DEMO_MODE 
       ? "⚡ DEMO MODE ACTIVATED: Submissions use realistic 250ms synthetic models."
-      : "🟢 LIVE AI MODE ACTIVATED: Realtime Gemini 2.5 Flash connected.",
+      : "🟢 LIVE AI MODE ACTIVATED: Realtime Gemini 2.0 Flash connected.",
     window.CYPHER_DEMO_MODE ? "warning" : "success"
   );
   window.dispatchEvent(new CustomEvent('cypher-demo-mode-changed', { detail: { active: window.CYPHER_DEMO_MODE } }));
