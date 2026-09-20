@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CYPHER • Sovereign Civic AI Platform</title>
+  <meta name="description" content="CYPHER Sovereign Civic AI Platform. Multimodal civic intelligence and automated dispatch platform." />
+  
+  <!-- Typography: Space Grotesk, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS & FontAwesome Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- Three.js with Fallback -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    if (typeof THREE === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- CYPHER i18n Localization Engine -->
+  <script src="/i18n.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #030712;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #f1f5f9;
+    }
+
+    .font-display { font-family: 'Space Grotesk', sans-serif; }
+    .font-mono-code { font-family: 'JetBrains Mono', monospace; }
+
+    #canvas-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+      z-index: 1;
+    }
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+
+    /* Spatial Custom Scrollbar */
+    .spatial-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .spatial-scroll::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.4);
+    }
+    .spatial-scroll::-webkit-scrollbar-thumb {
+      background: rgba(244, 63, 94, 0.4);
+      border-radius: 4px;
+    }
+    .spatial-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(244, 63, 94, 0.7);
+    }
+  </style>
+</head>
+<body class="relative w-full h-full overflow-hidden bg-[#030712]">
+
+  <!-- 3D Three.js WebGL Red Planet & Orbiting Cards Scene -->
+  <div id="canvas-container"></div>
+
+  <!-- UI OVERLAYS (EXACTLY MATCHING IMAGE) -->
+
+  <!-- Top Navigation Bar -->
+  <header class="fixed top-0 left-0 right-0 z-30 px-4 sm:px-8 py-5 flex items-center justify-between pointer-events-none">
+    <!-- Left: Brand Logo & Title -->
+    <a href="/" class="pointer-events-auto flex items-center gap-3.5 no-underline group">
+      <!-- Rounded square coral/red icon with white bold "C" -->
+      <div class="w-10 h-10 rounded-xl bg-[#e11d48] flex items-center justify-center font-display font-extrabold text-white text-2xl shadow-lg shadow-rose-950/60 border border-rose-400/30 transition transform group-hover:scale-105">
+        <span>C</span>
+      </div>
+      <div class="flex flex-col">
+        <div class="flex items-center gap-1.5 leading-tight">
+          <span data-i18n="platformName" class="font-display font-bold text-base sm:text-lg text-white tracking-wider">CYPHER</span>
+          <span class="text-[#fb7185] font-bold text-base">•</span>
+          <span data-i18n="bricsTag" class="font-display font-bold text-base sm:text-lg text-[#fb7185] tracking-wider">BRICS+</span>
+        </div>
+        <span data-i18n="homePlatformSub" class="text-[10px] sm:text-[11px] text-slate-400 font-mono tracking-widest uppercase">SOVEREIGN CIVIC AI PLATFORM</span>
+      </div>
+    </a>
+
+    <!-- Right: Action Pills -->
+    <div class="pointer-events-auto flex items-center gap-2 sm:gap-3">
+      <!-- Language Selector Capsule -->
+      <div class="flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 px-2.5 py-1.5 rounded-full shadow-lg shadow-black/40 text-xs font-mono transition">
+        <i class="fa-solid fa-globe text-rose-400 text-xs"></i>
+        <select id="cypher-lang-selector" onchange="onNavLanguageSelect(this.value)" class="bg-transparent text-xs font-mono text-white focus:outline-none cursor-pointer pr-1">
+          <option value="en" class="bg-slate-900 text-white">English</option>
+          <option value="hi" class="bg-slate-900 text-white">हिन्दी (Hindi)</option>
+          <option value="zh" class="bg-slate-900 text-white">中文 (Mandarin)</option>
+          <option value="ru" class="bg-slate-900 text-white">Русский (Russian)</option>
+          <option value="pt" class="bg-slate-900 text-white">Português (Brasil)</option>
+          <option value="ar" class="bg-slate-900 text-white">العربية (Arabic)</option>
+          <option value="fa" class="bg-slate-900 text-white">فارسی (Persian)</option>
+          <option value="am" class="bg-slate-900 text-white">አማርኛ (Amharic)</option>
+          <option value="te" class="bg-slate-900 text-white">తెలుగు (Telugu)</option>
+          <option value="ta" class="bg-slate-900 text-white">தமிழ் (Tamil)</option>
+          <option value="bn" class="bg-slate-900 text-white">বাংলা (Bengali)</option>
+          <option value="mr" class="bg-slate-900 text-white">मराठी (Marathi)</option>
+          <option value="zu" class="bg-slate-900 text-white">isiZulu</option>
+          <option value="xh" class="bg-slate-900 text-white">isiXhosa</option>
+          <option value="af" class="bg-slate-900 text-white">Afrikaans</option>
+          <option value="de" class="bg-slate-900 text-white">Deutsch</option>
+          <option value="it" class="bg-slate-900 text-white">Italiano</option>
+          <option value="tt" class="bg-slate-900 text-white">Татар (Tatar)</option>
+          <option value="ce" class="bg-slate-900 text-white">Нохчийн (Chechen)</option>
+          <option value="ba" class="bg-slate-900 text-white">Башҡорт (Bashkir)</option>
+          <option value="tco" class="bg-slate-900 text-white">Ticuna</option>
+        </select>
+      </div>
+
+      <!-- Enter Citizen Portal Button (Rose/Coral Pill) -->
+      <a href="/verify-phone" class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#e11d48] hover:bg-[#be123c] text-white font-medium text-xs sm:text-sm tracking-wide shadow-lg shadow-rose-950/60 border border-rose-400/40 flex items-center gap-2 transition transform hover:scale-[1.03] no-underline">
+        <i class="fa-solid fa-bolt-lightning text-xs text-rose-200"></i>
+        <span data-i18n="homeEnterPortal">Enter Citizen Portal</span>
+      </a>
+
+      <!-- Track Complaint Button (Cyan/Navy Pill) -->
+      <a href="/track" class="hidden sm:flex px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-cyan-300 hover:text-cyan-200 font-medium text-xs sm:text-sm tracking-wide border border-cyan-500/30 shadow-lg shadow-black/40 items-center gap-1.5 transition transform hover:scale-[1.03] no-underline" title="Track Existing Complaint Status">
+        <i class="fa-solid fa-satellite-dish text-xs text-cyan-400"></i>
+        <span>Track Complaint</span>
+      </a>
+
+      <!-- Admin Desk Button (Navy/Dark Pill) -->
+      <a href="/admin" class="hidden sm:flex px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-slate-200 font-medium text-xs sm:text-sm tracking-wide border border-slate-700/80 shadow-lg shadow-black/40 items-center gap-2 transition transform hover:scale-[1.03] no-underline">
+        <i class="fa-solid fa-shield-halved text-xs text-slate-400"></i>
+        <span data-i18n="homeAdminDesk">Admin Desk</span>
+      </a>
+
+      <!-- Architecture Spec Doc Button -->
+      <a href="/docs" class="hidden md:flex px-3.5 py-2 sm:py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-rose-300 hover:text-rose-200 font-mono text-xs tracking-wider border border-rose-500/30 shadow-lg shadow-black/40 items-center gap-1.5 transition transform hover:scale-[1.03] no-underline" title="View Technical Architecture Specification">
+        <i class="fa-solid fa-book-bookmark text-xs text-rose-400"></i>
+        <span>Spec Doc</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Titles Centered Over Space Above Planet -->
+  <div class="fixed top-20 sm:top-24 left-0 right-0 z-20 flex flex-col items-center text-center pointer-events-none px-4">
+    <!-- C Y P H E R -->
+    <h1 data-i18n="homeHeroTitle" class="font-display text-4xl sm:text-6xl font-light text-rose-200 tracking-[0.45em] sm:tracking-[0.55em] uppercase drop-shadow-[0_4px_24px_rgba(244,63,94,0.35)] select-none">
+      CYPHER
+    </h1>
+  </div>
+
+  <!-- Bottom Instruction Bar -->
+  <div class="fixed bottom-6 left-0 right-0 z-20 flex items-center justify-center gap-3 text-center pointer-events-none px-4">
+    <span data-i18n="homeBottomHint" class="font-mono text-xs sm:text-sm tracking-[0.22em] text-[#fb7185] select-none font-medium">
+      ✦ CLICK A CARD TO VIEW LANGUAGES • DRAG TO ROTATE RING ✦
+    </span>
+    <button onclick="handleAdminSecret()" class="pointer-events-auto text-amber-500/80 hover:text-amber-400 text-sm transition transform hover:scale-110 cursor-pointer" title="Sovereign Access">
+      🔒
+    </button>
+  </div>
+
+  <!-- Language Selection Modal (Pop-up on Card Click) -->
+  <div id="spatial-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="max-w-md w-full rounded-2xl p-6 bg-slate-900/95 border border-rose-500/30 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-3">
+          <span id="modal-flag" class="text-3xl">🇮🇳</span>
+          <div>
+            <h2 id="modal-country-name" class="font-display font-bold text-lg text-white">India</h2>
+            <p data-i18n="homeSelectDialect" class="text-xs text-rose-300 font-mono">Select Citizen Dialect or Language</p>
+          </div>
+        </div>
+        <button onclick="closeSpatialModal()" class="text-slate-400 hover:text-white p-1 cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div id="modal-languages-list" class="space-y-2 max-h-60 overflow-y-auto spatial-scroll pr-1">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
+        <button onclick="closeSpatialModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono cursor-pointer">
+          <span data-i18n="homeCancel">Cancel</span>
+        </button>
+        <button id="modal-proceed-btn" class="px-5 py-2 rounded-xl bg-[#e11d48] hover:bg-rose-500 text-white font-bold text-xs font-mono shadow-lg shadow-rose-950/50 cursor-pointer">
+          <span data-i18n="homeEnterPortalBtn">Enter Citizen Portal →</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT: Three.js Scene, Red Planet, Rockets & 3D Cards Carousel -->
+  <script>
+    // Sovereign BRICS+ Nations Metadata
+    const BRICS_COUNTRIES = [
+      {
+        id: "IND", code: "India", flag: "🇮🇳", name: "India", shortName: "INDIA",
+        colorHex: "#f59e0b",
+        languages: [
+          { primary: "Hindi", native: "हिन्दी" },
+          { primary: "Bengali", native: "বাংলা" },
+          { primary: "Telugu", native: "తెలుగు" },
+          { primary: "Marathi", native: "मराठी" },
+          { primary: "Tamil", native: "தமிழ்" },
+          { primary: "Urdu", native: "اردو" },
+          { primary: "Gujarati", native: "ગુજરાતી" },
+          { primary: "Kannada", native: "ಕನ್ನಡ" },
+          { primary: "English", native: "English" }
+        ]
+      },
+      {
+        id: "CHN", code: "China", flag: "🇨🇳", name: "China", shortName: "CHINA",
+        colorHex: "#ef4444",
+        languages: [
+          { primary: "Standard Mandarin", native: "普通话" },
+          { primary: "Cantonese", native: "粤语" },
+          { primary: "Shanghainese", native: "上海话" },
+          { primary: "Sichuanese", native: "四川话" },
+          { primary: "Hakka", native: "客家话" },
+          { primary: "English", native: "English" }
+        ]
+      },
+      {
+        id: "ZAF", code: "SouthAfrica", flag: "🇿🇦", name: "South Africa", shortName: "SOUTH AFRICA",
+        colorHex: "#10b981",
+        languages: [
+          { primary: "IsiZulu", native: "isiZulu" },
+          { primary: "IsiXhosa", native: "isiXhosa" },
+          { primary: "Afrikaans", native: "Afrikaans" },
+          { primary: "Sepedi", native: "Sesotho sa Leboa" },
+          { primary: "Setswana", native: "Setswana" },
+          { primary: "English", native: "English" }
+        ]
+      },
+      {
+        id: "ARE", code: "UAE", flag: "🇦🇪", name: "UAE", shortName: "UAE",
+        colorHex: "#f59e0b",
+        languages: [
+          { primary: "Arabic", native: "العربية" },
+          { primary: "Gulf Arabic", native: "خليجي" },
+          { primary: "English", native: "English" }
+        ]
+      },
+      {
+        id: "SAU", code: "SaudiArabia", flag: "🇸🇦", name: "Saudi Arabia", shortName: "SAUDI ARABIA",
+        colorHex: "#16a34a",
+        languages: [
+          { primary: "Arabic", native: "العربية" },
+          { primary: "Najdi Arabic", native: "نجدي" },
+          { primary: "English", native: "English" }
+        ]
+      },
+      {
+        id: "EGY", code: "Egypt", flag: "🇪🇬", name: "Egypt", shortName: "EGYPT",
+        colorHex: "#eab308",
+        languages: [
+          { primary: "Arabic", native: "العربية" },
+          { primary: "Egyptian Arabic", native: "مصري" },
+          { primary: "English", native: "English" }
+        ]
+      },
+      {
+        id: "ETH", code: "Ethiopia", flag: "🇪🇹", name: "Ethiopia", shortName: "ETHIOPIA",
+        colorHex: "#22c55e",
+        languages: [
+          { primary: "Amharic", native: "አማርኛ" },
+          { primary: "Oromo", native: "Afaan Oromoo" },
+          { primary: "Tigrinya", native: "ትግርኛ" },
+          { primary: "English", native: "English" }
+        ]
+      },
+      {
+        id: "IRN", code: "Iran", flag: "🇮🇷", name: "Iran", shortName: "IRAN",
+        colorHex: "#059669",
+        languages: [
+          { primary: "Persian", native: "فارسی" },
+          { primary: "Azerbaijani", native: "آذربایجان دیلی" },
+          { primary: "English", native: "English" }
+        ]
+      },
+      {
+        id: "BRA", code: "Brazil", flag: "🇧🇷", name: "Brazil", shortName: "BRAZIL",
+        colorHex: "#10b981",
+        languages: [
+          { primary: "Portuguese", native: "Português" },
+          { primary: "German", native: "Deutsch" },
+          { primary: "Italian", native: "Italiano" },
+          { primary: "Tikuna", native: "Ticuna" },
+          { primary: "English", native: "English" }
+        ]
+      },
+      {
+        id: "RUS", code: "Russia", flag: "🇷🇺", name: "Russia", shortName: "RUSSIA",
+        colorHex: "#0284c7",
+        languages: [
+          { primary: "Russian", native: "Русский" },
+          { primary: "Tatar", native: "Татар теле" },
+          { primary: "Bashkir", native: "Башҡорт теле" },
+          { primary: "Chechen", native: "Нохчийн мотт" },
+          { primary: "Chuvash", native: "Чӑваш чӗлхи" },
+          { primary: "English", native: "English" }
+        ]
+      }
+    ];
+
+    // Initialize Three.js Scene
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0.4, 10.2);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.3;
+    container.appendChild(renderer.domElement);
+
+    // Cosmic Lighting Setup (Deep space with strong key light for planet specular highlight)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.4);
+    dirLight1.position.set(5, 6, 8);
+    scene.add(dirLight1);
+
+    const redBacklight = new THREE.DirectionalLight(0xf43f5e, 0.8);
+    redBacklight.position.set(-6, -3, -5);
+    scene.add(redBacklight);
+
+    // --- Starry Space Background ---
+    const starCount = 650;
+    const starGeo = new THREE.BufferGeometry();
+    const starPositions = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount * 3; i += 3) {
+      starPositions[i] = (Math.random() - 0.5) * 80;
+      starPositions[i + 1] = (Math.random() - 0.5) * 80;
+      starPositions[i + 2] = (Math.random() - 0.5) * 80 - 15;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starMat = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.08,
+      transparent: true,
+      opacity: 0.75
+    });
+    const starField = new THREE.Points(starGeo, starMat);
+    scene.add(starField);
+
+    // =========================================================================
+    // CENTRAL CELESTIAL PLANET SPHERE
+    // =========================================================================
+    function generateRedPlanetTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      // Coral/Salmon Red Gradient Base
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#f87171');
+      grad.addColorStop(0.5, '#ef4444');
+      grad.addColorStop(1, '#dc2626');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Subtle longitude & latitude grid lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= canvas.width; x += 64) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = 0; y <= canvas.height; y += 48) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+
+      // Organic Craters & Terra Patches (exactly as seen in image)
+      const terraSpots = [
+        [180, 160, 95], [320, 240, 120], [540, 180, 80], [720, 280, 110], [900, 170, 75],
+        [240, 360, 90], [440, 380, 100], [680, 120, 65], [820, 370, 85], [100, 310, 70],
+        [380, 110, 60], [510, 290, 80], [610, 220, 50], [790, 220, 70]
+      ];
+      terraSpots.forEach(([cx, cy, r]) => {
+        ctx.fillStyle = '#b91c1c';
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Darker core crater
+        ctx.fillStyle = '#991b1b';
+        ctx.beginPath();
+        ctx.arc(cx + r * 0.1, cy + r * 0.1, r * 0.5, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+
+      // Lighter salmon/rose craters
+      ctx.fillStyle = 'rgba(254, 205, 211, 0.35)';
+      for (let i = 0; i < 70; i++) {
+        const rx = (Math.sin(i * 79) * 0.5 + 0.5) * canvas.width;
+        const ry = (Math.cos(i * 61) * 0.5 + 0.5) * canvas.height;
+        const rad = 6 + (i % 22);
+        ctx.beginPath();
+        ctx.arc(rx, ry, rad, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.generateMipmaps = true;
+      return tex;
+    }
+
+    const planetRadius = 2.45;
+    const planetGeo = new THREE.SphereGeometry(planetRadius, 64, 64);
+    const planetTex = generateRedPlanetTexture();
+    const planetMat = new THREE.MeshStandardMaterial({
+      map: planetTex,
+      roughness: 0.38,
+      metalness: 0.12,
+      emissive: 0x881337,
+      emissiveIntensity: 0.22
+    });
+    const planetMesh = new THREE.Mesh(planetGeo, planetMat);
+    scene.add(planetMesh);
+
+    // Planet Atmospheric Rim Glow
+    const atmosphereGeo = new THREE.SphereGeometry(planetRadius * 1.04, 32, 32);
+    const atmosphereMat = new THREE.MeshBasicMaterial({
+      color: 0xfb7185,
+      side: THREE.BackSide,
+      transparent: true,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending
+    });
+    const atmosphereMesh = new THREE.Mesh(atmosphereGeo, atmosphereMat);
+    planetMesh.add(atmosphereMesh);
+
+    // Equatorial Orbital Ring (Encircling planet equator as in image)
+    const ringGeo = new THREE.RingGeometry(planetRadius * 1.14, planetRadius * 1.18, 96);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xfecdd3,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending
+    });
+    const orbitRing = new THREE.Mesh(ringGeo, ringMat);
+    orbitRing.rotation.x = Math.PI / 2 + 0.14;
+    orbitRing.rotation.y = 0.08;
+    scene.add(orbitRing);
+
+    // --- Orbiting Spacecrafts (Yellow Rocket & White Shuttle as in image) ---
+    function createRocketMesh() {
+      const rocket = new THREE.Group();
+      // Body
+      const bodyGeo = new THREE.CylinderGeometry(0.06, 0.08, 0.36, 12);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.3 });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.rotation.z = Math.PI / 2;
+      rocket.add(body);
+      // Nose cone
+      const coneGeo = new THREE.ConeGeometry(0.065, 0.18, 12);
+      const coneMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+      const cone = new THREE.Mesh(coneGeo, coneMat);
+      cone.position.x = 0.25;
+      cone.rotation.z = -Math.PI / 2;
+      rocket.add(cone);
+      // Fins
+      const finGeo = new THREE.BoxGeometry(0.08, 0.20, 0.02);
+      const finMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
+      const fin = new THREE.Mesh(finGeo, finMat);
+      fin.position.x = -0.12;
+      rocket.add(fin);
+      return rocket;
+    }
+
+    function createShuttleMesh() {
+      const shuttle = new THREE.Group();
+      const bodyGeo = new THREE.ConeGeometry(0.08, 0.36, 8);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.rotation.z = -Math.PI / 2;
+      shuttle.add(body);
+      const wingGeo = new THREE.BoxGeometry(0.09, 0.38, 0.02);
+      const wingMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8 });
+      const wings = new THREE.Mesh(wingGeo, wingMat);
+      wings.position.x = -0.06;
+      shuttle.add(wings);
+      return shuttle;
+    }
+
+    const rocket1 = createRocketMesh();
+    scene.add(rocket1);
+
+    const shuttle1 = createShuttleMesh();
+    scene.add(shuttle1);
+
+    // =========================================================================
+    // 3D CAROUSEL OF SOVEREIGN COUNTRY CARDS (EXACT MATCH WITH IMAGE)
+    // =========================================================================
+    function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius, color) {
+      let rot = Math.PI / 2 * 3;
+      let x = cx;
+      let y = cy;
+      const step = Math.PI / spikes;
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - outerRadius);
+      for (let i = 0; i < spikes; i++) {
+        x = cx + Math.cos(rot) * outerRadius;
+        y = cy + Math.sin(rot) * outerRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+        x = cx + Math.cos(rot) * innerRadius;
+        y = cy + Math.sin(rot) * innerRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+      }
+      ctx.lineTo(cx, cy - outerRadius);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawCardFlag(ctx, id, x, y, w, h) {
+      if (id === 'IND') {
+        // India Flag
+        const sh = h / 3;
+        ctx.fillStyle = '#ff9933'; // Saffron
+        ctx.fillRect(x, y, w, sh);
+        ctx.fillStyle = '#ffffff'; // White
+        ctx.fillRect(x, y + sh, w, sh);
+        ctx.fillStyle = '#138808'; // Green
+        ctx.fillRect(x, y + sh * 2, w, sh);
+
+        // Ashoka Chakra
+        const cx = x + w / 2;
+        const cy = y + sh * 1.5;
+        const r = sh * 0.40;
+        ctx.strokeStyle = '#000080';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        ctx.fillStyle = '#000080';
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * 0.2, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.lineWidth = 1.6;
+        for (let i = 0; i < 24; i++) {
+          const a = (i * Math.PI) / 12;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+          ctx.stroke();
+        }
+      } else if (id === 'BRA') {
+        // Brazil Flag
+        ctx.fillStyle = '#009739';
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = '#fed100';
+        ctx.beginPath();
+        ctx.moveTo(x + w / 2, y + 16);
+        ctx.lineTo(x + w - 16, y + h / 2);
+        ctx.lineTo(x + w / 2, y + h - 16);
+        ctx.lineTo(x + 16, y + h / 2);
+        ctx.closePath();
+        ctx.fill();
+
+        const cx = x + w / 2;
+        const cy = y + h / 2;
+        const r = h * 0.28;
+        ctx.fillStyle = '#002776';
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(cx, cy + r * 0.88, r * 1.45, -Math.PI * 0.72, -Math.PI * 0.28);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        const bStars = [
+          [-0.3, 0.12], [0.2, 0.32], [-0.1, -0.18], [0.35, -0.08], [0.05, 0.42],
+          [-0.25, 0.38], [0.15, -0.28], [-0.38, -0.08]
+        ];
+        bStars.forEach(([sx, sy]) => {
+          ctx.beginPath();
+          ctx.arc(cx + sx * r, cy + sy * r, 2.2, 0, 2 * Math.PI);
+          ctx.fill();
+        });
+      } else if (id === 'RUS') {
+        // Russia Flag: White, Blue, Red
+        const sh = h / 3;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x, y, w, sh);
+        ctx.fillStyle = '#0039a6';
+        ctx.fillRect(x, y + sh, w, sh);
+        ctx.fillStyle = '#d52b1e';
+        ctx.fillRect(x, y + sh * 2, w, sh);
+      } else if (id === 'CHN') {
+        // China Flag
+        ctx.fillStyle = '#de2910';
+        ctx.fillRect(x, y, w, h);
+        drawStar(ctx, x + w * 0.22, y + h * 0.35, 5, 28, 12, '#ffde00');
+        drawStar(ctx, x + w * 0.42, y + h * 0.16, 5, 10, 4.5, '#ffde00');
+        drawStar(ctx, x + w * 0.52, y + h * 0.28, 5, 10, 4.5, '#ffde00');
+        drawStar(ctx, x + w * 0.52, y + h * 0.46, 5, 10, 4.5, '#ffde00');
+        drawStar(ctx, x + w * 0.42, y + h * 0.58, 5, 10, 4.5, '#ffde00');
+      } else if (id === 'ZAF') {
+        // South Africa Flag
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = '#e03a3e';
+        ctx.fillRect(x, y, w, h / 2);
+        ctx.fillStyle = '#002395';
+        ctx.fillRect(x, y + h / 2, w, h / 2);
+
+        // White border for pall
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 20;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + w * 0.45, y + h / 2);
+        ctx.lineTo(x + w, y + h / 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y + h);
+        ctx.lineTo(x + w * 0.45, y + h / 2);
+        ctx.stroke();
+
+        // Green central Y pall
+        ctx.strokeStyle = '#007749';
+        ctx.lineWidth = 12;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + w * 0.45, y + h / 2);
+        ctx.lineTo(x + w, y + h / 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y + h);
+        ctx.lineTo(x + w * 0.45, y + h / 2);
+        ctx.stroke();
+
+        // Black hoist triangle with gold border
+        ctx.fillStyle = '#ffb81c';
+        ctx.beginPath();
+        ctx.moveTo(x, y + 4);
+        ctx.lineTo(x + w * 0.38, y + h / 2);
+        ctx.lineTo(x, y + h - 4);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.moveTo(x, y + 16);
+        ctx.lineTo(x + w * 0.30, y + h / 2);
+        ctx.lineTo(x, y + h - 16);
+        ctx.closePath();
+        ctx.fill();
+      } else if (id === 'ARE') {
+        // UAE Flag: Red vertical hoist band, Green/White/Black horizontal bands
+        const hoistW = w * 0.28;
+        const bandW = w - hoistW;
+        const bandH = h / 3;
+
+        // Top: Green
+        ctx.fillStyle = '#00732f';
+        ctx.fillRect(x + hoistW, y, bandW, bandH);
+        // Middle: White
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x + hoistW, y + bandH, bandW, bandH);
+        // Bottom: Black
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(x + hoistW, y + bandH * 2, bandW, bandH);
+
+        // Hoist vertical stripe: Red
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(x, y, hoistW, h);
+      } else if (id === 'EGY') {
+        // Egypt Flag: Red, White, Black horizontal tricolor with Golden Eagle
+        const sh = h / 3;
+        ctx.fillStyle = '#ce1126';
+        ctx.fillRect(x, y, w, sh);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x, y + sh, w, sh);
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(x, y + sh * 2, w, sh);
+
+        // Golden Eagle of Saladin in center
+        const cx = x + w / 2;
+        const cy = y + sh * 1.5;
+
+        ctx.fillStyle = '#c5a059';
+        // Head
+        ctx.beginPath();
+        ctx.arc(cx, cy - 14, 7, 0, 2 * Math.PI);
+        ctx.fill();
+        // Beak
+        ctx.beginPath();
+        ctx.moveTo(cx - 6, cy - 16);
+        ctx.lineTo(cx - 13, cy - 13);
+        ctx.lineTo(cx - 6, cy - 11);
+        ctx.closePath();
+        ctx.fill();
+        // Wings
+        ctx.beginPath();
+        ctx.moveTo(cx - 25, cy - 6);
+        ctx.lineTo(cx + 25, cy - 6);
+        ctx.lineTo(cx + 18, cy + 18);
+        ctx.lineTo(cx - 18, cy + 18);
+        ctx.closePath();
+        ctx.fill();
+        // Shield
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(cx - 8, cy - 2, 16, 17);
+        ctx.strokeStyle = '#c5a059';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 8, cy - 2, 16, 17);
+        // Scroll / Tail
+        ctx.fillStyle = '#c5a059';
+        ctx.fillRect(cx - 14, cy + 18, 28, 6);
+      } else if (id === 'ETH') {
+        // Ethiopia Flag: Green, Yellow, Red tricolor with Radiant Blue Star Emblem
+        const sh = h / 3;
+        ctx.fillStyle = '#078930';
+        ctx.fillRect(x, y, w, sh);
+        ctx.fillStyle = '#fcdd09';
+        ctx.fillRect(x, y + sh, w, sh);
+        ctx.fillStyle = '#da121a';
+        ctx.fillRect(x, y + sh * 2, w, sh);
+
+        // Central Blue Emblem
+        const cx = x + w / 2;
+        const cy = y + sh * 1.5;
+        const r = sh * 0.42;
+
+        ctx.fillStyle = '#0f47af';
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Yellow Pentagram Star
+        drawStar(ctx, cx, cy, 5, r * 0.8, r * 0.35, '#fcdd09');
+
+        // Radiating rays
+        ctx.strokeStyle = '#fcdd09';
+        ctx.lineWidth = 2.2;
+        for (let i = 0; i < 5; i++) {
+          const a = (i * Math.PI * 2) / 5 - Math.PI / 2 + Math.PI / 5;
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(a) * r * 0.25, cy + Math.sin(a) * r * 0.25);
+          ctx.lineTo(cx + Math.cos(a) * r * 0.95, cy + Math.sin(a) * r * 0.95);
+          ctx.stroke();
+        }
+      } else if (id === 'IRN') {
+        // Iran Flag: Green, White, Red tricolor with stylized emblem & Takbir fringes
+        const sh = h / 3;
+        ctx.fillStyle = '#239f40';
+        ctx.fillRect(x, y, w, sh);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x, y + sh, w, sh);
+        ctx.fillStyle = '#da0000';
+        ctx.fillRect(x, y + sh * 2, w, sh);
+
+        // White decorative Kufic fringe
+        ctx.fillStyle = '#ffffff';
+        for (let bx = x + 6; bx < x + w - 6; bx += 16) {
+          ctx.fillRect(bx, y + sh - 4, 8, 4);
+          ctx.fillRect(bx, y + sh * 2, 8, 4);
+        }
+
+        // Red Emblem in center
+        const cx = x + w / 2;
+        const cy = y + sh * 1.5;
+        ctx.fillStyle = '#da0000';
+        ctx.strokeStyle = '#da0000';
+        // Center sword
+        ctx.fillRect(cx - 2, cy - 20, 4, 38);
+        // Top crest
+        ctx.beginPath();
+        ctx.arc(cx, cy - 14, 5, 0, Math.PI);
+        ctx.fill();
+        // Side crescents
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(cx - 9, cy, 14, -Math.PI * 0.45, Math.PI * 0.45);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(cx + 9, cy, 14, Math.PI * 0.55, Math.PI * 1.45);
+        ctx.stroke();
+      } else if (id === 'SAU') {
+        // Saudi Arabia Flag: Emerald Green with Shahada & Scimitar Sword
+        ctx.fillStyle = '#006c35';
+        ctx.fillRect(x, y, w, h);
+
+        const cx = x + w / 2;
+        const cy = y + h / 2;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 22px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('لَا إِلٰهَ إِلَّا الله', cx, cy - 24);
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('مُحَمَّدٌ رَسُولُ الله', cx, cy - 2);
+
+        // Horizontal Scimitar Sword pointing left
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx + 52, cy + 24);
+        ctx.lineTo(cx - 35, cy + 24);
+        ctx.quadraticCurveTo(cx - 48, cy + 23, cx - 56, cy + 18);
+        ctx.stroke();
+        // Crossguard
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(cx + 42, cy + 17);
+        ctx.lineTo(cx + 42, cy + 31);
+        ctx.stroke();
+        // Pommel
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(cx + 54, cy + 24, 3.5, 0, 2 * Math.PI);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '64px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(id, x + w / 2, y + h / 2);
+      }
+    }
+
+    function getCardI18nDict(lang) {
+      const activeKey = (typeof window.resolveLangKey === 'function') ? window.resolveLangKey(lang) : (lang || 'en');
+      return (window.CYPHER_I18N && window.CYPHER_I18N[activeKey]) || window.CYPHER_BASE_EN || {};
+    }
+
+    function createCountryCardTexture(country, targetLang) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 440;
+      canvas.height = 680;
+      const ctx = canvas.getContext('2d');
+      const dict = getCardI18nDict(targetLang || (typeof window.getSavedLanguage === 'function' ? window.getSavedLanguage() : 'en'));
+
+      // Card Dark Solid Body
+      ctx.fillStyle = '#070b14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Distinctive Luminous Outer Border
+      ctx.strokeStyle = country.colorHex || '#f59e0b';
+      ctx.lineWidth = 12;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(8, 8, canvas.width - 16, canvas.height - 16, 22);
+      else ctx.rect(8, 8, canvas.width - 16, canvas.height - 16);
+      ctx.stroke();
+
+      // Flag Graphic Box
+      const flagX = 36;
+      const flagY = 40;
+      const flagW = canvas.width - 72;
+      const flagH = 250;
+
+      ctx.save();
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(flagX, flagY, flagW, flagH, 12);
+      else ctx.rect(flagX, flagY, flagW, flagH);
+      ctx.clip();
+      drawCardFlag(ctx, country.id, flagX, flagY, flagW, flagH);
+      ctx.restore();
+
+      // Flag Outline
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(flagX, flagY, flagW, flagH, 12);
+      else ctx.rect(flagX, flagY, flagW, flagH);
+      ctx.stroke();
+
+      // Country Name
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 38px "Space Grotesk", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(country.shortName, canvas.width / 2, 400);
+
+      // Subtitle: BRICS MEMBER STATE (Localized)
+      ctx.fillStyle = country.colorHex || '#f59e0b';
+      ctx.font = 'bold 15px monospace';
+      ctx.fillText(dict.homeBricsMember || 'BRICS MEMBER STATE', canvas.width / 2, 452);
+
+      // Horizontal Divider
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(65, 495);
+      ctx.lineTo(canvas.width - 65, 495);
+      ctx.stroke();
+
+      // Multilingual count pill (Localized)
+      const langCount = country.languages ? country.languages.length : 5;
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '16px "Space Grotesk", sans-serif';
+      ctx.fillText(`${langCount} ${dict.homeDialectsCount || 'Sovereign Dialects'}`, canvas.width / 2, 538);
+
+      // Interactive Action Pill (Localized)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(65, 580, canvas.width - 130, 52, 26);
+      else ctx.rect(65, 580, canvas.width - 130, 52);
+      ctx.fill();
+      ctx.strokeStyle = country.colorHex || '#f59e0b';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(dict.homeViewLanguages || 'VIEW LANGUAGES →', canvas.width / 2, 606);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.minFilter = THREE.LinearFilter;
+      return tex;
+    }
+
+    function createCountryCardBackTexture(country, targetLang) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 440;
+      canvas.height = 680;
+      const ctx = canvas.getContext('2d');
+      const dict = getCardI18nDict(targetLang || (typeof window.getSavedLanguage === 'function' ? window.getSavedLanguage() : 'en'));
+
+      // Card Dark Solid Body
+      ctx.fillStyle = '#050811';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Border
+      ctx.strokeStyle = country.colorHex || '#f59e0b';
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(8, 8, canvas.width - 16, canvas.height - 16, 22);
+      else ctx.rect(8, 8, canvas.width - 16, canvas.height - 16);
+      ctx.stroke();
+
+      // Subtle cyber grid
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      for (let x = 30; x < canvas.width; x += 30) {
+        ctx.beginPath(); ctx.moveTo(x, 30); ctx.lineTo(x, canvas.height - 30); ctx.stroke();
+      }
+      for (let y = 30; y < canvas.height; y += 30) {
+        ctx.beginPath(); ctx.moveTo(30, y); ctx.lineTo(canvas.width - 30, y); ctx.stroke();
+      }
+
+      // Large Flag Emblem
+      ctx.font = '90px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(country.flag, canvas.width / 2, 220);
+
+      // Sovereign Code
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 44px "Space Grotesk", sans-serif';
+      ctx.fillText(country.id, canvas.width / 2, 330);
+
+      ctx.fillStyle = country.colorHex || '#f59e0b';
+      ctx.font = 'bold 15px monospace';
+      ctx.fillText(dict.homeSovereignNode || 'SOVEREIGN NODE', canvas.width / 2, 380);
+
+      // Divider
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(80, 420);
+      ctx.lineTo(canvas.width - 80, 420);
+      ctx.stroke();
+
+      // Platform Details
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '14px monospace';
+      ctx.fillText('CYPHER • BRICS+ FEDERATION', canvas.width / 2, 470);
+      ctx.fillText('256-BIT ENCRYPTED MESH', canvas.width / 2, 505);
+
+      // Tap to inspect pill
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(70, 570, canvas.width - 140, 48, 24);
+      else ctx.rect(70, 570, canvas.width - 140, 48);
+      ctx.fill();
+      ctx.strokeStyle = country.colorHex || '#f59e0b';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 13px monospace';
+      ctx.fillText(dict.homeTapToInspect || 'SOVEREIGN DIALECTS ✦', canvas.width / 2, 595);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.minFilter = THREE.LinearFilter;
+      return tex;
+    }
+
+    const carouselGroup = new THREE.Group();
+    scene.add(carouselGroup);
+
+    const ringRadius = 4.4;
+    const cardWidth = 1.5;
+    const cardHeight = 2.4;
+    const cardMeshes = [];
+
+    BRICS_COUNTRIES.forEach((country, index) => {
+      const angle = (index / BRICS_COUNTRIES.length) * Math.PI * 2;
+      const x = Math.sin(angle) * ringRadius;
+      const z = Math.cos(angle) * ringRadius;
+
+      const cardGroup = new THREE.Group();
+      cardGroup.position.set(x, 0, z);
+
+      // Orient front face outward away from planet center (NON-INVERTED)
+      cardGroup.rotation.y = angle;
+
+      // Front Face
+      const cardTex = createCountryCardTexture(country);
+      const cardGeo = new THREE.PlaneGeometry(cardWidth, cardHeight);
+      const cardMat = new THREE.MeshBasicMaterial({
+        map: cardTex,
+        side: THREE.FrontSide
+      });
+      const cardMesh = new THREE.Mesh(cardGeo, cardMat);
+      cardGroup.add(cardMesh);
+
+      // Back Face (inward-facing sovereign cyber plate)
+      const backTex = createCountryCardBackTexture(country);
+      const backMat = new THREE.MeshBasicMaterial({
+        map: backTex,
+        side: THREE.FrontSide
+      });
+      const backMesh = new THREE.Mesh(cardGeo, backMat);
+      backMesh.rotation.y = Math.PI;
+      cardGroup.add(backMesh);
+
+      const cardData = {
+        type: 'CAROUSEL_CARD',
+        country: country,
+        parentGroup: cardGroup,
+        baseAngle: angle
+      };
+
+      cardMesh.userData = { ...cardData, isBack: false };
+      backMesh.userData = { ...cardData, isBack: true };
+
+      cardMeshes.push(cardMesh);
+      cardMeshes.push(backMesh);
+      carouselGroup.add(cardGroup);
+    });
+
+    // Real-time dynamic 3D card texture re-renderer for language changes
+    window.updateAllCardTextures = function(langKey) {
+      const activeKey = (typeof window.resolveLangKey === 'function') ? window.resolveLangKey(langKey) : (langKey || 'en');
+      cardMeshes.forEach(mesh => {
+        if (!mesh.userData || !mesh.userData.country) return;
+        const country = mesh.userData.country;
+        if (mesh.userData.isBack) {
+          const oldTex = mesh.material.map;
+          const newTex = createCountryCardBackTexture(country, activeKey);
+          mesh.material.map = newTex;
+          mesh.material.needsUpdate = true;
+          if (oldTex) oldTex.dispose();
+        } else {
+          const oldTex = mesh.material.map;
+          const newTex = createCountryCardTexture(country, activeKey);
+          mesh.material.map = newTex;
+          mesh.material.needsUpdate = true;
+          if (oldTex) oldTex.dispose();
+        }
+      });
+    };
+
+    // =========================================================================
+    // INTERACTION: ROTATE RING BY DRAGGING & CLICK CARD TO VIEW LANGUAGES
+    // =========================================================================
+    let isDragging = false;
+    let previousMouseX = 0;
+    let dragVelocity = 0;
+    let autoRotate = true;
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    window.addEventListener('mousedown', (e) => {
+      if (e.target.closest('header') || e.target.closest('#spatial-modal') || e.target.closest('button') || e.target.closest('a')) return;
+      isDragging = true;
+      previousMouseX = e.clientX;
+      dragVelocity = 0;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const deltaX = e.clientX - previousMouseX;
+        carouselGroup.rotation.y += deltaX * 0.005;
+        planetMesh.rotation.y += deltaX * 0.003;
+        dragVelocity = deltaX * 0.005;
+        previousMouseX = e.clientX;
+      } else {
+        checkCardHover(e);
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // Touch events for mobile screens
+    window.addEventListener('touchstart', (e) => {
+      if (e.target.closest('header') || e.target.closest('#spatial-modal') || e.target.closest('button') || e.target.closest('a')) return;
+      if (e.touches.length === 1) {
+        isDragging = true;
+        previousMouseX = e.touches[0].clientX;
+        dragVelocity = 0;
+      }
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      if (isDragging && e.touches.length === 1) {
+        const deltaX = e.touches[0].clientX - previousMouseX;
+        carouselGroup.rotation.y += deltaX * 0.006;
+        planetMesh.rotation.y += deltaX * 0.003;
+        dragVelocity = deltaX * 0.006;
+        previousMouseX = e.touches[0].clientX;
+      }
+    });
+
+    window.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
+    // Hover Highlight
+    let hoveredCard = null;
+    function checkCardHover(e) {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      const intersects = raycaster.intersectObjects(cardMeshes);
+      if (intersects.length > 0) {
+        const mesh = intersects[0].object;
+        if (hoveredCard !== mesh) {
+          if (hoveredCard && hoveredCard.userData.parentGroup) {
+            hoveredCard.userData.parentGroup.scale.set(1, 1, 1);
+          }
+          hoveredCard = mesh;
+          if (mesh.userData.parentGroup) {
+            mesh.userData.parentGroup.scale.set(1.08, 1.08, 1.08);
+          }
+          container.style.cursor = 'pointer';
+        }
+      } else {
+        if (hoveredCard) {
+          if (hoveredCard.userData.parentGroup) {
+            hoveredCard.userData.parentGroup.scale.set(1, 1, 1);
+          }
+          hoveredCard = null;
+          container.style.cursor = 'grab';
+        }
+      }
+    }
+
+    // Click to Open Languages Modal
+    window.addEventListener('click', (e) => {
+      if (e.target.closest('header') || e.target.closest('#spatial-modal') || e.target.closest('button') || e.target.closest('a')) return;
+      if (Math.abs(dragVelocity) > 0.004) return;
+
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      const intersects = raycaster.intersectObjects(cardMeshes);
+      if (intersects.length > 0) {
+        const mesh = intersects[0].object;
+        if (mesh.userData && mesh.userData.country) {
+          openSpatialModal(mesh.userData.country);
+        }
+      }
+    });
+
+    // Responsive Resizing
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // =========================================================================
+    // MULTILINGUAL SELECTION MODAL
+    // =========================================================================
+    let selectedCountry = null;
+    let selectedLanguage = null;
+
+    function openSpatialModal(country) {
+      selectedCountry = country;
+
+      // Determine initial selection: if current active language matches one of this country's languages, preserve it; otherwise use country's primary
+      const currentActiveLang = (typeof window.getSavedLanguage === 'function') ? window.getSavedLanguage() : 'en';
+      const matchedLang = country.languages.find(l => {
+        const resolved = (typeof window.resolveLangKey === 'function') ? window.resolveLangKey(l.primary) : l.primary;
+        return resolved === currentActiveLang;
+      });
+
+      selectedLanguage = matchedLang ? matchedLang.primary : (country.languages[0] ? country.languages[0].primary : "English");
+
+      // Auto-translate whole page to selected language immediately upon card opening
+      if (typeof window.switchCypherLanguage === 'function') {
+        window.switchCypherLanguage(selectedLanguage);
+      }
+
+      document.getElementById('modal-flag').textContent = country.flag;
+      document.getElementById('modal-country-name').textContent = country.name;
+
+      const listContainer = document.getElementById('modal-languages-list');
+      listContainer.innerHTML = '';
+
+      country.languages.forEach((lang) => {
+        const isSelected = selectedLanguage === lang.primary;
+        const btn = document.createElement('button');
+        btn.className = `w-full px-4 py-2.5 rounded-xl text-left flex items-center justify-between text-xs font-mono transition border ${
+          isSelected
+            ? 'bg-rose-950/60 border-rose-500 text-rose-200'
+            : 'bg-slate-950/50 border-slate-800 text-slate-300 hover:border-slate-700'
+        }`;
+        btn.innerHTML = `
+          <span class="font-bold">${lang.primary}</span>
+          <span class="text-slate-400">${lang.native}</span>
+        `;
+        btn.onclick = () => {
+          selectedLanguage = lang.primary;
+
+          // AUTO-TRANSLATE THE WHOLE PAGE INTO SELECTED LANGUAGE
+          if (typeof window.switchCypherLanguage === 'function') {
+            window.switchCypherLanguage(lang.primary);
+          }
+
+          Array.from(listContainer.children).forEach(c => {
+            c.className = 'w-full px-4 py-2.5 rounded-xl text-left flex items-center justify-between text-xs font-mono transition border bg-slate-950/50 border-slate-800 text-slate-300 hover:border-slate-700';
+          });
+          btn.className = 'w-full px-4 py-2.5 rounded-xl text-left flex items-center justify-between text-xs font-mono transition border bg-rose-950/60 border-rose-500 text-rose-200';
+        };
+        listContainer.appendChild(btn);
+      });
+
+      const proceedBtn = document.getElementById('modal-proceed-btn');
+      proceedBtn.onclick = () => {
+        window.location.href = `/verify-phone?country=${encodeURIComponent(country.name)}&lang=${encodeURIComponent(selectedLanguage)}`;
+      };
+
+      document.getElementById('spatial-modal').classList.remove('hidden');
+    }
+    window.openSpatialModal = openSpatialModal;
+
+    function closeSpatialModal() {
+      document.getElementById('spatial-modal').classList.add('hidden');
+    }
+    window.closeSpatialModal = closeSpatialModal;
+
+    // Navbar Language Selector Handler
+    window.onNavLanguageSelect = function(langKey) {
+      if (typeof window.switchCypherLanguage === 'function') {
+        window.switchCypherLanguage(langKey);
+      }
+    };
+
+    // Auto-sync UI and language on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const activeLang = (typeof window.getSavedLanguage === 'function') ? window.getSavedLanguage() : 'en';
+      if (typeof window.applyCypherTranslations === 'function') {
+        window.applyCypherTranslations(activeLang);
+      }
+      const sel = document.getElementById('cypher-lang-selector');
+      if (sel) {
+        sel.value = (typeof window.resolveLangKey === 'function') ? window.resolveLangKey(activeLang) : activeLang;
+      }
+      if (typeof window.updateAllCardTextures === 'function') {
+        window.updateAllCardTextures(activeLang);
+      }
+    });
+
+    // Listen for cypher:languageChanged event to keep navbar selector in sync
+    window.addEventListener('cypher:languageChanged', (e) => {
+      const sel = document.getElementById('cypher-lang-selector');
+      if (sel && e.detail && e.detail.langKey) {
+        sel.value = e.detail.langKey;
+      }
+    });
+
+    // Secret Admin Click Handler
+    let adminClickCount = 0;
+    function handleAdminSecret() {
+      adminClickCount++;
+      if (adminClickCount >= 3) {
+        adminClickCount = 0;
+        window.location.href = '/admin';
+      }
+    }
+    window.handleAdminSecret = handleAdminSecret;
+
+    // =========================================================================
+    // ANIMATION LOOP
+    // =========================================================================
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const elapsedTime = clock.getElapsedTime();
+
+      // Carousel inertia & auto-rotation
+      if (!isDragging) {
+        if (Math.abs(dragVelocity) > 0.0001) {
+          carouselGroup.rotation.y += dragVelocity;
+          planetMesh.rotation.y += dragVelocity * 0.5;
+          dragVelocity *= 0.94;
+        } else if (autoRotate) {
+          carouselGroup.rotation.y += 0.0022;
+          planetMesh.rotation.y += 0.0015;
+        }
+      }
+
+      // Gentle floating oscillation on each country card
+      cardMeshes.forEach((mesh, idx) => {
+        if (mesh.userData.parentGroup) {
+          mesh.userData.parentGroup.position.y = Math.sin(elapsedTime * 1.8 + idx * 0.65) * 0.07;
+        }
+      });
+
+      // Spacecraft Orbits
+      const r1Angle = elapsedTime * 0.52;
+      rocket1.position.set(Math.cos(r1Angle) * 3.5, Math.sin(r1Angle * 0.8) * 0.5 + 0.35, Math.sin(r1Angle) * 3.5);
+      rocket1.rotation.y = -r1Angle + Math.PI / 2;
+
+      const s1Angle = -elapsedTime * 0.40 + 2.1;
+      shuttle1.position.set(Math.cos(s1Angle) * 3.1, Math.sin(s1Angle * 0.6) * 0.4 - 0.55, Math.sin(s1Angle) * 3.1);
+      shuttle1.rotation.y = -s1Angle - Math.PI / 2;
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

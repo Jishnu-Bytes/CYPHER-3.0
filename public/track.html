@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CYPHER - Real-Time Complaint Tracking & Dispatch Status</title>
+  <meta name="description" content="Track your filed civic complaint status, municipal dispatch squads, and real-time resolution progress across BRICS+ jurisdictions.">
+
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Socket.io for Real-Time Dispatch Push -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            cypher: {
+              red: '#ef4444',
+              gold: '#eab308',
+              navy: '#020617',
+              surface: '#090d1a',
+              border: '#1e293b'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Space Grotesk"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      background-color: #020617;
+      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .glass-card {
+      background: rgba(9, 13, 26, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .pulse-beacon {
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse-ring 2s infinite;
+    }
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+  </style>
+
+  <!-- Multilingual i18n Dictionary -->
+  <script src="/i18n.js"></script>
+</head>
+<body class="min-h-screen flex flex-col bg-[#020617] text-slate-100 antialiased selection:bg-red-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="h-16 border-b border-slate-800/80 bg-[#020617]/90 backdrop-blur sticky top-0 z-40 px-4 sm:px-8 flex items-center justify-between">
+    <div class="flex items-center space-x-3 sm:space-x-4">
+      <a href="/" class="flex items-center space-x-2 text-white hover:text-red-400 transition group">
+        <div class="w-8 h-8 rounded-lg bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-500 font-bold group-hover:scale-105 transition">
+          <i class="fa-solid fa-shield-halved text-sm"></i>
+        </div>
+        <div>
+          <span class="font-display font-extrabold text-sm sm:text-base tracking-wider block leading-none">CYPHER</span>
+          <span class="text-[9px] font-mono text-slate-400 tracking-widest uppercase">Citizen Tracker</span>
+        </div>
+      </a>
+      <span class="text-slate-700 hidden sm:inline">|</span>
+      <div class="hidden sm:flex items-center space-x-2 text-xs font-mono text-slate-400">
+        <span id="header-flag" class="text-base">🇮🇳</span>
+        <span id="header-country-name" class="text-slate-200 font-bold">India</span>
+      </div>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="flex items-center space-x-2 sm:space-x-4">
+      <!-- Language Selector -->
+      <div class="relative">
+        <select 
+          id="cypher-lang-selector" 
+          onchange="onLanguageChanged(this.value)"
+          class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-red-500 cursor-pointer appearance-none pr-7"
+        >
+          <option value="en">🇬🇧 English</option>
+          <option value="hi">🇮🇳 हिन्दी (Hindi)</option>
+          <option value="te">🇮🇳 తెలుగు (Telugu)</option>
+          <option value="ta">🇮🇳 தமிழ் (Tamil)</option>
+          <option value="mr">🇮🇳 मराठी (Marathi)</option>
+          <option value="bn">🇮🇳 বাংলা (Bengali)</option>
+          <option value="pt">🇧🇷 Português</option>
+          <option value="ru">🇷🇺 Русский</option>
+          <option value="zh">🇨🇳 中文</option>
+          <option value="zu">🇿🇦 isiZulu</option>
+          <option value="ar">🇦🇪 العربية</option>
+        </select>
+        <i class="fa-solid fa-globe text-[10px] text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+      </div>
+
+      <!-- File Another Report Button -->
+      <a href="/report" class="hidden md:inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-mono text-xs font-bold transition shadow-md shadow-red-600/20">
+        <i class="fa-solid fa-plus text-[11px]"></i>
+        <span>File Report</span>
+      </a>
+
+      <!-- Docs -->
+      <a href="/docs" class="text-slate-400 hover:text-white text-xs font-mono px-2 py-1 rounded transition hidden sm:inline-block">
+        <i class="fa-solid fa-book-open mr-1"></i>Docs
+      </a>
+
+      <!-- Admin Lock -->
+      <a href="/admin" class="text-slate-500 hover:text-slate-300 text-xs px-2 py-1 transition" title="Admin Portal">
+        <i class="fa-solid fa-lock"></i>
+      </a>
+    </div>
+  </header>
+
+  <!-- Real-Time Sync Banner -->
+  <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800 py-2.5 px-4 sm:px-8">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+      <div class="flex items-center space-x-2.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-beacon"></span>
+        <span class="text-slate-300 font-bold">SOVEREIGN TRACKING NETWORK:</span>
+        <span class="text-emerald-400 font-bold" id="socket-status">Live Connected</span>
+      </div>
+      <div id="logged-citizen-bar" class="hidden flex items-center space-x-3 text-slate-400">
+        <span>Verified Phone: <strong id="logged-phone-text" class="text-slate-200"></strong></span>
+        <button onclick="clearPhoneSession()" class="text-xs text-red-400 hover:underline">Switch</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Container -->
+  <main class="flex-grow max-w-6xl mx-auto w-full px-4 sm:px-8 py-8 space-y-8">
+    
+    <!-- Hero Header & Search Section -->
+    <div class="space-y-4 text-center sm:text-left">
+      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-bold">
+        <i class="fa-solid fa-satellite-dish text-[11px] animate-pulse"></i>
+        <span>REAL-TIME COMPLAINT DISPATCH TRACKER</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-display font-extrabold text-white tracking-tight">
+        Track Your Civic Incident Status
+      </h1>
+      <p class="text-slate-400 text-sm sm:text-base max-w-2xl font-normal leading-relaxed">
+        Look up your reference voucher or registered mobile number to monitor field response teams, AI triage scores, and municipal SLA resolution timelines.
+      </p>
+    </div>
+
+    <!-- Search & Filter Card -->
+    <div class="glass-card rounded-2xl p-4 sm:p-6 shadow-xl border border-slate-800 space-y-4">
+      <form onsubmit="handleSearch(event)" class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-grow">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input 
+            type="text" 
+            id="track-query-input" 
+            placeholder="Enter Reference ID (e.g. BRICS-IND-2026-XXXX) or Mobile Number..." 
+            class="w-full bg-[#020617] border border-slate-700 focus:border-cyan-500 rounded-xl pl-11 pr-4 py-3 text-white text-sm font-mono placeholder-slate-500 focus:outline-none transition"
+          />
+        </div>
+        <button 
+          type="submit" 
+          class="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-display font-bold text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-cyan-600/20 cursor-pointer"
+        >
+          <i class="fa-solid fa-radar text-xs"></i>
+          <span>Track Complaint</span>
+        </button>
+        <button 
+          type="button" 
+          onclick="resetSearch()" 
+          class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-xs border border-slate-700 transition"
+        >
+          Reset
+        </button>
+      </form>
+
+      <!-- Status Filter Tabs -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80 text-xs font-mono">
+        <div class="flex flex-wrap items-center gap-1.5" id="status-filters">
+          <button onclick="setFilter('ALL')" data-filter="ALL" class="filter-btn px-3 py-1.5 rounded-lg bg-cyan-500 text-slate-950 font-bold transition">All Reports (<span id="count-all">0</span>)</button>
+          <button onclick="setFilter('Pending')" data-filter="Pending" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition">Pending (<span id="count-pending">0</span>)</button>
+          <button onclick="setFilter('Dispatched')" data-filter="Dispatched" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition">Dispatched (<span id="count-dispatched">0</span>)</button>
+          <button onclick="setFilter('In Progress')" data-filter="In Progress" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition">In Progress (<span id="count-progress">0</span>)</button>
+          <button onclick="setFilter('Resolved')" data-filter="Resolved" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition">Resolved (<span id="count-resolved">0</span>)</button>
+        </div>
+        <div class="text-slate-400 text-[11px]">
+          Showing <span id="showing-count" class="text-white font-bold">0</span> complaints
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Search Filter Pill (if active) -->
+    <div id="active-query-pill" class="hidden flex items-center space-x-2 text-xs font-mono text-cyan-400 bg-cyan-950/40 border border-cyan-500/30 px-3 py-1.5 rounded-lg w-fit">
+      <span>Filtered by: <strong id="active-query-text" class="text-white"></strong></span>
+      <button onclick="resetSearch()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- Complaint Cards Feed -->
+    <div id="complaints-container" class="space-y-6">
+      <!-- Loading Skeleton -->
+      <div id="loading-spinner" class="py-16 text-center space-y-4">
+        <i class="fa-solid fa-circle-notch fa-spin text-3xl text-cyan-400"></i>
+        <p class="text-slate-400 text-xs font-mono">Synchronizing civic complaints with municipal dispatch core...</p>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden glass-card rounded-2xl p-10 text-center space-y-5 border border-slate-800">
+      <div class="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 text-slate-500 flex items-center justify-center text-2xl mx-auto">
+        <i class="fa-solid fa-inbox"></i>
+      </div>
+      <div class="space-y-1">
+        <h3 class="text-lg font-bold text-white font-display">No Incident Reports Found</h3>
+        <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+          No civic complaints match your query. You can search by a different reference code, registered phone number, or submit a new report.
+        </p>
+      </div>
+      <div class="pt-2 flex flex-wrap items-center justify-center gap-3">
+        <button onclick="resetSearch()" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono transition">
+          Clear Search Filter
+        </button>
+        <a href="/report" class="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-display font-bold text-xs shadow-lg shadow-red-600/20 transition flex items-center space-x-2">
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>File a New Report</span>
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Sticky Quick Action Bar -->
+  <div class="sticky bottom-4 z-30 max-w-sm mx-auto px-4 w-full">
+    <a href="/report" class="w-full py-3.5 px-6 rounded-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-display font-bold text-xs sm:text-sm shadow-2xl shadow-red-600/40 flex items-center justify-center space-x-2 transition border border-red-400/30">
+      <i class="fa-solid fa-bullhorn text-sm"></i>
+      <span>File Another Incident Report</span>
+      <i class="fa-solid fa-arrow-right text-xs"></i>
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-12 h-14 bg-[#020617] border-t border-slate-800 flex items-center justify-between px-6 text-[11px] text-slate-500 font-mono uppercase tracking-wider">
+    <p>Sovereign Dispatch Protocol • BRICS Civic Guard</p>
+    <div class="flex items-center gap-4">
+      <span class="text-[#10b981] font-bold">● DISPATCH SQUADS ACTIVE</span>
+      <a href="/admin" class="text-slate-600 hover:text-slate-400 transition" title="Admin Portal">
+        <i class="fa-solid fa-lock text-xs"></i>
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    let allReports = [];
+    let currentFilter = 'ALL';
+    let currentSearch = '';
+    let socket = null;
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 1. Check Session & Verified Phone
+      initCitizenHeader();
+
+      // 2. Parse URL parameters for direct lookup (e.g. /track?ref=BRICS-IND-2026-9481 or /track?phone=...)
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialRef = urlParams.get('ref') || urlParams.get('q') || '';
+      const initialPhone = urlParams.get('phone') || '';
+      const lookupQuery = initialRef || initialPhone;
+
+      if (lookupQuery) {
+        document.getElementById('track-query-input').value = lookupQuery;
+        currentSearch = lookupQuery;
+      }
+
+      // 3. Connect to real-time WebSockets
+      initSocket();
+
+      // 4. Load reports from API + local storage
+      await loadReports();
+    });
+
+    function initCitizenHeader() {
+      let session = {};
+      try {
+        const raw = sessionStorage.getItem('brics_citizen_session') || localStorage.getItem('brics_citizen_session');
+        if (raw) session = JSON.parse(raw);
+      } catch (e) {}
+
+      const country = session.country || 'India';
+      const flagMap = {
+        'India': '🇮🇳',
+        'Brazil': '🇧🇷',
+        'South Africa': '🇿🇦',
+        'Russia': '🇷🇺',
+        'China': '🇨🇳',
+        'Egypt': '🇪🇬',
+        'United Arab Emirates': '🇦🇪',
+        'UAE': '🇦🇪',
+        'Iran': '🇮🇷',
+        'Ethiopia': '🇪🇹',
+        'Saudi Arabia': '🇸🇦'
+      };
+
+      document.getElementById('header-country-name').textContent = country;
+      document.getElementById('header-flag').textContent = flagMap[country] || '🇮🇳';
+
+      const phone = sessionStorage.getItem('brics_verified_phone') || localStorage.getItem('brics_verified_phone') || session.verifiedPhone;
+      if (phone) {
+        document.getElementById('logged-citizen-bar').classList.remove('hidden');
+        document.getElementById('logged-phone-text').textContent = phone;
+        // If no search is typed yet, default search can include this phone
+        if (!currentSearch && !new URLSearchParams(window.location.search).get('ref')) {
+          currentSearch = phone;
+          document.getElementById('track-query-input').value = phone;
+        }
+      }
+
+      // Sync Language
+      const savedLang = typeof getSavedLanguage === 'function' ? getSavedLanguage() : 'en';
+      if (document.getElementById('cypher-lang-selector')) {
+        document.getElementById('cypher-lang-selector').value = savedLang;
+      }
+      if (typeof applyCypherTranslations === 'function') {
+        applyCypherTranslations(savedLang);
+      }
+    }
+
+    function clearPhoneSession() {
+      sessionStorage.removeItem('brics_verified_phone');
+      localStorage.removeItem('brics_verified_phone');
+      window.location.href = '/verify-phone';
+    }
+
+    function onLanguageChanged(lang) {
+      if (typeof switchCypherLanguage === 'function') {
+        switchCypherLanguage(lang);
+      }
+    }
+
+    function initSocket() {
+      try {
+        if (typeof io !== 'undefined') {
+          socket = io();
+          socket.on('connect', () => {
+            document.getElementById('socket-status').textContent = 'Live Connected';
+            document.getElementById('socket-status').className = 'text-emerald-400 font-bold';
+          });
+          socket.on('disconnect', () => {
+            document.getElementById('socket-status').textContent = 'Reconnecting...';
+            document.getElementById('socket-status').className = 'text-yellow-400 font-bold';
+          });
+          socket.on('statusUpdated', (updatedReport) => {
+            updateSingleReport(updatedReport);
+          });
+          socket.on('newReport', (newReport) => {
+            if (!allReports.some(r => r.referenceId === newReport.referenceId || r.id === newReport.id)) {
+              allReports.unshift(newReport);
+              renderReports();
+            }
+          });
+        }
+      } catch (err) {
+        console.warn("Socket init error:", err);
+      }
+    }
+
+    function updateSingleReport(updatedReport) {
+      const idx = allReports.findIndex(r => r.id === updatedReport.id || r.referenceId === updatedReport.referenceId);
+      if (idx !== -1) {
+        allReports[idx] = updatedReport;
+      } else {
+        allReports.unshift(updatedReport);
+      }
+      renderReports();
+    }
+
+    async function loadReports() {
+      const loading = document.getElementById('loading-spinner');
+      if (loading) loading.classList.remove('hidden');
+
+      let serverReports = [];
+      try {
+        const res = await fetch('/api/reports');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.reports)) {
+          serverReports = data.reports;
+        }
+      } catch (err) {
+        console.warn("Failed to fetch /api/reports, using offline cache:", err);
+      }
+
+      // Merge with locally filed reports
+      let localReports = [];
+      try {
+        localReports = JSON.parse(localStorage.getItem('brics_my_reports') || '[]');
+      } catch(e) {}
+
+      // Combine uniquely by referenceId
+      const map = new Map();
+      serverReports.forEach(r => map.set(r.referenceId || r.id, r));
+      localReports.forEach(r => {
+        if (!map.has(r.referenceId || r.id)) {
+          map.set(r.referenceId || r.id, r);
+        }
+      });
+
+      allReports = Array.from(map.values());
+
+      // If user had an active search query from input or URL
+      renderReports();
+    }
+
+    function handleSearch(e) {
+      e.preventDefault();
+      currentSearch = document.getElementById('track-query-input').value.trim();
+      renderReports();
+    }
+
+    function resetSearch() {
+      currentSearch = '';
+      document.getElementById('track-query-input').value = '';
+      currentFilter = 'ALL';
+      updateFilterButtons();
+      renderReports();
+    }
+
+    function setFilter(status) {
+      currentFilter = status;
+      updateFilterButtons();
+      renderReports();
+    }
+
+    function updateFilterButtons() {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === currentFilter) {
+          btn.className = 'filter-btn px-3 py-1.5 rounded-lg bg-cyan-500 text-slate-950 font-bold transition';
+        } else {
+          btn.className = 'filter-btn px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition';
+        }
+      });
+    }
+
+    function renderReports() {
+      const container = document.getElementById('complaints-container');
+      const emptyState = document.getElementById('empty-state');
+      const queryPill = document.getElementById('active-query-pill');
+      const queryText = document.getElementById('active-query-text');
+
+      if (currentSearch) {
+        queryPill.classList.remove('hidden');
+        queryText.textContent = currentSearch;
+      } else {
+        queryPill.classList.add('hidden');
+      }
+
+      // Calculate Counts
+      document.getElementById('count-all').textContent = allReports.length;
+      document.getElementById('count-pending').textContent = allReports.filter(r => r.status === 'Pending').length;
+      document.getElementById('count-dispatched').textContent = allReports.filter(r => r.status === 'Dispatched').length;
+      document.getElementById('count-progress').textContent = allReports.filter(r => r.status === 'In Progress').length;
+      document.getElementById('count-resolved').textContent = allReports.filter(r => r.status === 'Resolved').length;
+
+      // Filter
+      let filtered = allReports.filter(report => {
+        // Status filter
+        if (currentFilter !== 'ALL' && report.status !== currentFilter) {
+          return false;
+        }
+
+        // Search text
+        if (currentSearch) {
+          const q = currentSearch.toLowerCase();
+          const rawDigits = q.replace(/\D/g, '');
+          const rPhone = (report.verifiedPhone || '').replace(/\D/g, '');
+          const rRef = (report.referenceId || '').toLowerCase();
+          const rName = (report.citizenName || '').toLowerCase();
+          const rCat = (report.finalCategory || report.problemDomain || '').toLowerCase();
+          const rSummary = (report.summary || '').toLowerCase();
+
+          const matchesRef = rRef.includes(q);
+          const matchesPhone = rawDigits.length >= 4 && rPhone.includes(rawDigits);
+          const matchesName = rName.includes(q);
+          const matchesCat = rCat.includes(q);
+          const matchesSummary = rSummary.includes(q);
+
+          if (!matchesRef && !matchesPhone && !matchesName && !matchesCat && !matchesSummary) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      document.getElementById('showing-count').textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      container.innerHTML = filtered.map(report => buildReportCardHtml(report)).join('');
+    }
+
+    function getCategoryIconAndColor(category, domain) {
+      const cat = (category || domain || '').toLowerCase();
+      if (cat.includes('electric') || cat.includes('power')) {
+        return { icon: 'fa-bolt', color: 'text-yellow-400', bg: 'bg-yellow-400/10 border-yellow-400/30' };
+      } else if (cat.includes('water')) {
+        return { icon: 'fa-droplet', color: 'text-blue-400', bg: 'bg-blue-400/10 border-blue-400/30' };
+      } else if (cat.includes('sanitation')) {
+        return { icon: 'fa-toilet', color: 'text-teal-400', bg: 'bg-teal-400/10 border-teal-400/30' };
+      } else if (cat.includes('drain')) {
+        return { icon: 'fa-water', color: 'text-cyan-400', bg: 'bg-cyan-400/10 border-cyan-400/30' };
+      } else if (cat.includes('light')) {
+        return { icon: 'fa-lightbulb', color: 'text-amber-400', bg: 'bg-amber-400/10 border-amber-400/30' };
+      } else if (cat.includes('transport')) {
+        return { icon: 'fa-train-subway', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/30' };
+      } else if (cat.includes('health')) {
+        return { icon: 'fa-hospital', color: 'text-rose-400', bg: 'bg-rose-400/10 border-rose-400/30' };
+      } else if (cat.includes('disaster') || cat.includes('emergency')) {
+        return { icon: 'fa-triangle-exclamation', color: 'text-red-500', bg: 'bg-red-500/10 border-red-500/30' };
+      } else if (cat.includes('waste')) {
+        return { icon: 'fa-trash-can', color: 'text-orange-400', bg: 'bg-orange-400/10 border-orange-400/30' };
+      } else if (cat.includes('road')) {
+        return { icon: 'fa-road', color: 'text-orange-400', bg: 'bg-orange-400/10 border-orange-400/30' };
+      }
+      return { icon: 'fa-bridge', color: 'text-indigo-400', bg: 'bg-indigo-400/10 border-indigo-400/30' };
+    }
+
+    function buildReportCardHtml(report) {
+      const score = report.hazardPriorityScore || 3;
+      let scoreBadge = '';
+      let slaWindow = '';
+
+      if (score === 5) {
+        scoreBadge = '<span class="px-2.5 py-1 rounded bg-red-600/20 text-red-400 border border-red-500/40 text-[11px] font-bold font-mono animate-pulse">PRIORITY 5/5 • CRITICAL EMERGENCY</span>';
+        slaWindow = '<span class="text-red-400 font-bold">Target SLA: &lt; 15 Minutes (Code Red Rapid Response)</span>';
+      } else if (score === 4) {
+        scoreBadge = '<span class="px-2.5 py-1 rounded bg-orange-500/20 text-orange-400 border border-orange-500/40 text-[11px] font-bold font-mono">PRIORITY 4/5 • SEVERE HAZARD</span>';
+        slaWindow = '<span class="text-orange-400 font-bold">Target SLA: &lt; 2 Hours (Urgent Squad Dispatch)</span>';
+      } else if (score === 3) {
+        scoreBadge = '<span class="px-2.5 py-1 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 text-[11px] font-bold font-mono">PRIORITY 3/5 • SIGNIFICANT</span>';
+        slaWindow = '<span class="text-yellow-400 font-bold">Target SLA: &lt; 12 Hours (Standard Municipal Maintenance)</span>';
+      } else {
+        scoreBadge = `<span class="px-2.5 py-1 rounded bg-blue-500/20 text-blue-400 border border-blue-500/40 text-[11px] font-bold font-mono">PRIORITY ${score}/5 • STANDARD</span>`;
+        slaWindow = '<span class="text-blue-400 font-bold">Target SLA: &lt; 24-48 Hours (Routine Civic Resolution)</span>';
+      }
+
+      const catMeta = getCategoryIconAndColor(report.finalCategory, report.problemDomain);
+
+      // Status Stepper Computation
+      const isPending = report.status === 'Pending';
+      const isDispatched = report.status === 'Dispatched';
+      const isInProgress = report.status === 'In Progress';
+      const isResolved = report.status === 'Resolved';
+
+      // Status badge
+      let statusBadge = '';
+      if (isResolved) {
+        statusBadge = '<span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold font-mono flex items-center space-x-1.5"><i class="fa-solid fa-check"></i><span>RESOLVED</span></span>';
+      } else if (isInProgress) {
+        statusBadge = '<span class="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/40 text-xs font-bold font-mono flex items-center space-x-1.5"><i class="fa-solid fa-screwdriver-wrench fa-spin"></i><span>IN PROGRESS</span></span>';
+      } else if (isDispatched) {
+        statusBadge = '<span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-xs font-bold font-mono flex items-center space-x-1.5"><i class="fa-solid fa-truck-fast"></i><span>SQUAD DISPATCHED</span></span>';
+      } else {
+        statusBadge = '<span class="px-3 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-xs font-bold font-mono flex items-center space-x-1.5"><i class="fa-solid fa-hourglass-half"></i><span>PENDING QUEUE</span></span>';
+      }
+
+      // Stepper Classes
+      const step1Class = "text-emerald-400 border-emerald-500/50 bg-emerald-500/10";
+      const step2Class = "text-emerald-400 border-emerald-500/50 bg-emerald-500/10";
+      const step3Class = (isDispatched || isInProgress || isResolved) 
+        ? "text-emerald-400 border-emerald-500/50 bg-emerald-500/10" 
+        : "text-slate-500 border-slate-800 bg-slate-900";
+      const step4Class = isResolved 
+        ? "text-emerald-400 border-emerald-500/50 bg-emerald-500/10" 
+        : isInProgress
+          ? "text-blue-400 border-blue-500/50 bg-blue-500/10 animate-pulse"
+          : "text-slate-500 border-slate-800 bg-slate-900";
+
+      const dispatchLogsHtml = (report.dispatchLogs && report.dispatchLogs.length > 0)
+        ? report.dispatchLogs.map(log => `
+          <div class="flex items-start space-x-2 text-xs font-mono text-slate-300 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
+            <i class="fa-solid fa-clipboard-check text-cyan-400 mt-0.5 text-[11px]"></i>
+            <div class="space-y-0.5">
+              <div class="text-[10px] text-slate-400">${log.timestamp || ''} • <strong class="text-slate-200">${log.officer || 'Municipal Dispatcher'}</strong></div>
+              <p class="text-slate-300 text-xs">${log.note}</p>
+            </div>
+          </div>
+        `).join('')
+        : '<p class="text-[11px] text-slate-500 font-mono italic">Awaiting initial squad activity log...</p>';
+
+      const displayCategory = report.problemDomain 
+        ? `${report.problemDomain} (${report.finalCategory})` 
+        : (report.finalCategory || 'Civic Hazard');
+
+      return `
+        <div class="glass-card rounded-2xl p-5 sm:p-7 shadow-xl border border-slate-800 space-y-6 hover:border-slate-700 transition">
+          
+          <!-- Top Row: Ref ID, Status, Category -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2.5">
+                <span class="font-mono text-sm sm:text-base font-bold text-white tracking-wider">${report.referenceId || report.id}</span>
+                <button onclick="copyToClipboard('${report.referenceId || report.id}')" title="Copy Reference ID" class="text-xs text-slate-400 hover:text-cyan-400 transition">
+                  <i class="fa-regular fa-copy"></i>
+                </button>
+                <span class="text-[10px] font-mono text-slate-500 uppercase">${report.country || 'India'} (${report.language || 'English'})</span>
+              </div>
+              <div class="text-[11px] font-mono text-slate-400 flex items-center space-x-2">
+                <span><i class="fa-regular fa-clock mr-1 text-slate-500"></i>${report.timestamp || new Date(report.createdAt).toLocaleString()}</span>
+                <span>•</span>
+                <span><i class="fa-solid fa-location-dot mr-1 text-red-400"></i>${report.location || 'Local Grid'}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+              ${scoreBadge}
+              ${statusBadge}
+            </div>
+          </div>
+
+          <!-- Domain & Priority Highlight -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-lg ${catMeta.bg} ${catMeta.color} flex items-center justify-center text-lg">
+                <i class="fa-solid ${catMeta.icon}"></i>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-500 uppercase block">Civic Category</span>
+                <span class="font-bold text-white">${displayCategory}</span>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-truck-medical"></i>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-500 uppercase block">Assigned Unit</span>
+                <span class="font-bold text-white line-clamp-1" title="${report.recommendedDispatchUnit}">${report.recommendedDispatchUnit || 'Municipal Rapid Squad'}</span>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-stopwatch"></i>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-500 uppercase block">Resolution Window</span>
+                ${slaWindow}
+              </div>
+            </div>
+          </div>
+
+          <!-- 4-STEP RESOLUTION PROGRESS TRACKER -->
+          <div class="p-4 rounded-xl bg-slate-950/90 border border-slate-800 space-y-3">
+            <div class="text-[10px] font-mono uppercase text-slate-400 font-bold tracking-wider">
+              Emergency Dispatch Resolution Lifecycle
+            </div>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] font-mono">
+              <div class="p-2.5 rounded-lg border flex items-center space-x-2 ${step1Class}">
+                <i class="fa-solid fa-check text-xs"></i>
+                <div>
+                  <span class="block font-bold">1. Intake Logged</span>
+                  <span class="text-[9px] opacity-75">ID Verified</span>
+                </div>
+              </div>
+
+              <div class="p-2.5 rounded-lg border flex items-center space-x-2 ${step2Class}">
+                <i class="fa-solid fa-check text-xs"></i>
+                <div>
+                  <span class="block font-bold">2. AI Triaged</span>
+                  <span class="text-[9px] opacity-75">Score: ${score}/5</span>
+                </div>
+              </div>
+
+              <div class="p-2.5 rounded-lg border flex items-center space-x-2 ${step3Class}">
+                <i class="fa-solid ${(isDispatched || isInProgress || isResolved) ? 'fa-check' : 'fa-circle-dot'} text-xs"></i>
+                <div>
+                  <span class="block font-bold">3. Squad Dispatched</span>
+                  <span class="text-[9px] opacity-75">${(isDispatched || isInProgress || isResolved) ? 'Field Unit En Route' : 'In Queue'}</span>
+                </div>
+              </div>
+
+              <div class="p-2.5 rounded-lg border flex items-center space-x-2 ${step4Class}">
+                <i class="fa-solid ${isResolved ? 'fa-check-double' : isInProgress ? 'fa-screwdriver-wrench' : 'fa-clock'} text-xs"></i>
+                <div>
+                  <span class="block font-bold">4. Resolved</span>
+                  <span class="text-[9px] opacity-75">${isResolved ? 'Completed ✓' : isInProgress ? 'Work Active' : 'Pending Work'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Incident Summary & Translation -->
+          <div class="space-y-2 text-xs">
+            <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+              <span class="text-[10px] font-mono uppercase text-slate-400 font-bold block">Incident Summary (Triage Protocol)</span>
+              <p class="text-slate-200 text-sm font-sans font-medium">"${report.summary || 'Civic infrastructure hazard reported.'}"</p>
+            </div>
+
+            ${report.transcription ? `
+            <div class="p-3 rounded-xl bg-slate-950/50 border border-slate-800/80 flex flex-col gap-1 text-[11px] font-mono">
+              <div class="text-slate-400"><strong>Spoken Dialect Transcript:</strong> <span class="text-slate-300">"${report.transcription}"</span></div>
+              <div class="text-slate-400"><strong>English Protocol Translation:</strong> <span class="text-slate-200">${report.englishTranslation || 'Standard format'}</span></div>
+            </div>` : ''}
+          </div>
+
+          <!-- Dispatch Activity Logs -->
+          <div class="space-y-2 pt-1 border-t border-slate-800/80">
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+              <span class="font-bold uppercase tracking-wider"><i class="fa-solid fa-list-check mr-1.5 text-cyan-400"></i>Dispatch & Resolution Activity Logs</span>
+              <span>SHA256-VERIFIED</span>
+            </div>
+            <div class="space-y-1.5">
+              ${dispatchLogsHtml}
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800 text-xs font-mono">
+            <div class="text-[11px] text-slate-500">
+              Citizen ID: <span class="text-slate-400">${report.citizenName || 'Verified Citizen'}</span>
+              ${report.verifiedPhone ? `• Phone: <span class="text-slate-400">${report.verifiedPhone}</span>` : ''}
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="window.print()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-print text-[11px]"></i>
+                <span>Print Record</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert("Reference ID copied to clipboard: " + text);
+        }).catch(() => {
+          prompt("Copy your Reference ID:", text);
+        });
+      } else {
+        prompt("Copy your Reference ID:", text);
+      }
+    }
+  </script>
+</body>
+</html>

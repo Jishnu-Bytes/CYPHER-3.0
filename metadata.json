@@ -1,0 +1,11 @@
+{
+  "name": "CYPHER",
+  "description": "Multimodal civic issue intake, real-time multilingual AI transcription \u0026 triage, and government ID verification platform for BRICS+ nations.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

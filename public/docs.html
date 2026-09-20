@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CYPHER System Architecture & Model Design Specification</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    pre, code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background-color: #ffffff !important; color: #0f172a !important; }
+      .print-card { border: 1px solid #cbd5e1 !important; background: #ffffff !important; color: #0f172a !important; box-shadow: none !important; }
+      .print-table th, .print-table td { border-color: #cbd5e1 !important; color: #0f172a !important; }
+      .print-code { background: #f8fafc !important; color: #0f172a !important; border: 1px solid #e2e8f0 !important; }
+      a { color: #0f172a !important; text-decoration: underline; }
+    }
+  </style>
+</head>
+<body class="bg-[#030712] text-slate-200 min-h-screen selection:bg-red-500/30">
+
+  <!-- Top Navigation & Action Bar -->
+  <header class="no-print sticky top-0 z-50 bg-[#0b0f19]/90 backdrop-blur-md border-b border-slate-800 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center space-x-3">
+      <a href="/" class="flex items-center space-x-2 text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-arrow-left text-sm"></i>
+        <span class="text-xs font-mono uppercase tracking-wider">Back to App</span>
+      </a>
+      <span class="text-slate-600">|</span>
+      <div class="flex items-center space-x-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+        <span class="font-display font-extrabold text-sm tracking-widest text-white">CYPHER</span>
+        <span class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 font-bold uppercase">
+          SPEC-V4
+        </span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a href="/CYPHER_ARCHITECTURE_SPECIFICATION.md" download="CYPHER_ARCHITECTURE_SPECIFICATION.md" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-mono transition flex items-center space-x-1.5 border border-slate-700">
+        <i class="fa-solid fa-file-arrow-down"></i>
+        <span>Download Markdown</span>
+      </a>
+      <button onclick="window.print()" class="px-4 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-mono font-bold transition flex items-center space-x-1.5 shadow-lg shadow-red-600/20">
+        <i class="fa-solid fa-print"></i>
+        <span>Print / Save as PDF</span>
+      </button>
+      <a href="/admin" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-mono transition border border-slate-800">
+        <i class="fa-solid fa-satellite-dish mr-1 text-red-400"></i> Admin Queue
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Document Container -->
+  <main class="max-w-5xl mx-auto px-6 py-10 space-y-12">
+
+    <!-- Document Cover & Header Block -->
+    <section class="border-b border-slate-800 pb-10">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4 font-mono text-xs text-slate-400">
+        <div>
+          <span class="text-red-400 font-bold uppercase tracking-wider">SOVEREIGN CIVIC INFRASTRUCTURE SPECIFICATION</span>
+          <p class="text-slate-500 mt-0.5">DOC ID: CYPHER-ARCH-SPEC-2026-V4 • REVISION: 4.2</p>
+        </div>
+        <div class="text-right">
+          <span class="inline-block px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+            STATUS: APPROVED FOR BRICS+ DEPLOYMENT
+          </span>
+          <p class="text-slate-500 mt-1">EFFECTIVE: SEPTEMBER 2026</p>
+        </div>
+      </div>
+
+      <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight font-display mb-4">
+        CYPHER: Automated Cross-Border Multimodal Emergency Civic Dispatch System
+      </h1>
+      <p class="text-base sm:text-lg text-slate-300 leading-relaxed font-sans max-w-4xl">
+        Complete operational and mathematical architecture covering low-bandwidth multimodal dialect ingestion, sovereign DPDP/GDPR client-side PII masking, 5-tier immutable life-safety criticality evaluation, geospatial vector deduplication, and Human-in-the-Loop emergency containment.
+      </p>
+    </section>
+
+    <!-- Table of Contents Card -->
+    <section class="no-print p-6 rounded-2xl bg-[#0b0f19] border border-slate-800/80">
+      <h2 class="text-xs font-bold text-slate-400 font-mono uppercase tracking-wider mb-4 flex items-center">
+        <i class="fa-solid fa-list-ol text-red-400 mr-2"></i> Table of Contents
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-2.5 gap-x-6 text-xs font-mono">
+        <a href="#sec-1" class="text-slate-300 hover:text-red-400 transition">1. Executive Summary</a>
+        <a href="#sec-2" class="text-slate-300 hover:text-red-400 transition">2. End-to-End System Topology</a>
+        <a href="#sec-3" class="text-slate-300 hover:text-red-400 transition">3. Sovereign Privacy & PII Guard</a>
+        <a href="#sec-4" class="text-slate-300 hover:text-red-400 transition">4. Multimodal Telemetry Pipeline</a>
+        <a href="#sec-5" class="text-slate-300 hover:text-red-400 transition">5. Dialect Normalization Engine</a>
+        <a href="#sec-6" class="text-slate-300 hover:text-red-400 transition">6. 5-Tier Criticality Matrix</a>
+        <a href="#sec-7" class="text-slate-300 hover:text-red-400 transition">7. Human-in-the-Loop (HITL) Gate</a>
+        <a href="#sec-8" class="text-slate-300 hover:text-red-400 transition">8. Spatial Vector Deduplication</a>
+        <a href="#sec-9" class="text-slate-300 hover:text-red-400 transition">9. Cryptographic Audit Chain</a>
+        <a href="#sec-10" class="text-slate-300 hover:text-red-400 transition">10. Real-Time Command Bus</a>
+        <a href="#sec-11" class="text-slate-300 hover:text-red-400 transition">11. Formal JSON Data Schema</a>
+        <a href="#sec-12" class="text-slate-300 hover:text-red-400 transition">12. Field Crew Task Delegation</a>
+      </div>
+    </section>
+
+    <!-- Section 1 -->
+    <section id="sec-1" class="space-y-4">
+      <div class="flex items-center space-x-2 text-red-400 font-mono text-xs uppercase tracking-wider">
+        <span>Section 01</span>
+        <span>•</span>
+        <span>Operational Overview</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white font-display">1. Executive Summary & Problem Context</h2>
+      <p class="text-slate-300 leading-relaxed text-sm">
+        Public municipal emergency triage systems across the BRICS+ alliance (India, Brazil, South Africa, Russia, China, and partner states) suffer from catastrophic friction during acute civic failures:
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <h3 class="text-sm font-bold text-red-400 font-mono mb-1.5"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Vernacular Friction</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Distressed citizens report crises in regional dialects (e.g., Telugu, Hindi, isiZulu, Portuguese, Marathi) with heavy colloquial code-switching. Traditional call centers miss urgent acoustic markers.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <h3 class="text-sm font-bold text-amber-400 font-mono mb-1.5"><i class="fa-solid fa-wifi mr-1.5"></i>Degraded Rural Bandwidth</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Severe storms, grid collapses, and monsoons degrade cellular connections to 2G/3G speeds. Standard image/video uploads time out, stalling civic response.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <h3 class="text-sm font-bold text-blue-400 font-mono mb-1.5"><i class="fa-solid fa-clone mr-1.5"></i>Queue Flooding & Duplication</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            A single 11kV live powerline failure generates hundreds of redundant calls in 10 minutes, exhausting emergency response capacity.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <h3 class="text-sm font-bold text-purple-400 font-mono mb-1.5"><i class="fa-solid fa-robot mr-1.5"></i>AI Triage Hallucinations</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Unregulated generative models trigger expensive false alarms or downplay lethal risks without deterministic validation.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section id="sec-2" class="space-y-4">
+      <div class="flex items-center space-x-2 text-red-400 font-mono text-xs uppercase tracking-wider">
+        <span>Section 02</span>
+        <span>•</span>
+        <span>Systems Engineering</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white font-display">2. End-to-End System Topology</h2>
+      <p class="text-slate-300 text-sm leading-relaxed">
+        The complete runtime pipeline operates across 5 decoupled execution rings, ensuring high availability, sovereign data handling, and deterministic response times:
+      </p>
+
+      <div class="p-5 rounded-2xl bg-[#020617] border border-slate-800 font-mono text-xs leading-relaxed text-slate-300 overflow-x-auto print-code">
+<pre>
+[ CITIZEN PWA / MOBILE ]
+       │  (1) Phone OTP + In-Browser Canvas Zero-Knowledge PII Star Masking
+       │  (2) Low-Bandwidth WebM/Opus Audio (16-32 kbps) + Geolocation + Optional Photo
+       ▼
+[ EXPRESS.JS INGESTION GATEWAY (Port 3000) ]
+       │  - IP-based Token Bucket Rate Limiter
+       │  - Multer In-Memory Storage Buffer (Zero unredacted disk persistence)
+       ▼
+[ MULTIMODAL AI TRIAGE CORE (Gemini Multimodal / Sovereign Autonomous Fallback) ]
+       │  - Phonetic Dialect Normalization (Local Vernacular -> Objective English Protocol)
+       │  - 5-Tier Immutable Criticality Evaluation (Level 1 Cosmetic to Level 5 Lethal)
+       │  - Human-in-the-Loop Gatekeeper Flag (Mandatory for Level 4/5 or Ambiguity)
+       ▼
+[ SPATIO-SEMANTIC DEDUPLICATION ENGINE ]
+       │  - Haversine Geospatial Proximity Filter (&lt; 100 meters)
+       │  - 64-Dimensional Semantic Cosine Similarity (&gt; 0.72 Threshold)
+       │  - Corroborates parent cluster; increments citizen counter without duplicate dispatch
+       ▼
+[ AUDIT & REAL-TIME DISPATCH BUS ]
+       │  - SHA-256 Digital Tamper-Evident Seal Generation
+       │  - Bi-directional Socket.IO Broadcast to Municipal Incident Command
+       │  - Real-time SLA Countdown Monitors (<15m for L5, <2h for L4)
+</pre>
+      </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section id="sec-3" class="space-y-4">
+      <div class="flex items-center space-x-2 text-red-400 font-mono text-xs uppercase tracking-wider">
+        <span>Section 03</span>
+        <span>•</span>
+        <span>Privacy & Legal Sovereignty</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white font-display">3. Citizen Verification & Sovereign Privacy Guard (DPDP / GDPR)</h2>
+      <p class="text-slate-300 text-sm leading-relaxed">
+        To prevent municipal surveillance liabilities and comply with the Indian DPDP Act, European GDPR (Article 9), and Brazil's LGPD:
+      </p>
+      <div class="p-5 rounded-2xl bg-[#0b0f19] border border-slate-800 space-y-3">
+        <h3 class="text-sm font-bold text-emerald-400 font-mono flex items-center">
+          <i class="fa-solid fa-shield-halved mr-2"></i> Client-Side Canvas Zero-Knowledge Masking
+        </h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          When identity verification documents (such as Aadhaar, CPF, or National ID) are captured, the image is rendered onto an internal HTML5 <code class="text-red-300">&lt;canvas&gt;</code> before any bytes leave browser memory.
+        </p>
+        <div class="p-3 bg-[#020617] rounded-xl border border-slate-800 font-mono text-xs text-amber-400 flex items-center justify-between">
+          <span>Client Masking Pattern:</span>
+          <span class="font-bold text-white">★★★★ ****-****-**** ★★★★</span>
+        </div>
+        <p class="text-xs text-slate-400">
+          Raw national ID digits never touch the network, municipal ingress servers, or external AI model endpoints.
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 6: 5-Level Criticality Matrix -->
+    <section id="sec-6" class="space-y-4">
+      <div class="flex items-center space-x-2 text-red-400 font-mono text-xs uppercase tracking-wider">
+        <span>Section 06</span>
+        <span>•</span>
+        <span>Triage Determinism</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white font-display">6. The 5-Level Hardcore Criticality Scoring Matrix</h2>
+      <p class="text-slate-300 text-sm leading-relaxed">
+        CYPHER replaces subjective human judgment with an immutable mathematical triage matrix. Level 5 dispatches are strictly barred unless explicit semantic or visual proof of un-isolated mortal hazard exists:
+      </p>
+
+      <div class="overflow-x-auto rounded-2xl border border-slate-800">
+        <table class="w-full text-left text-xs font-mono print-table">
+          <thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider border-b border-slate-800">
+            <tr>
+              <th class="p-3.5">Level</th>
+              <th class="p-3.5">Classification</th>
+              <th class="p-3.5">Formal Threshold Criteria</th>
+              <th class="p-3.5">Target SLA</th>
+              <th class="p-3.5">Tactical Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60 bg-[#0b0f19]">
+            <tr class="bg-red-500/10">
+              <td class="p-3.5 font-bold text-red-400">LEVEL 5</td>
+              <td class="p-3.5 font-bold text-white">Critical Crisis</td>
+              <td class="p-3.5 text-slate-300 font-sans">Immediate, un-isolated threat to human life or systemic grid collapse (live 11kV cables in water, arterial bridge collapse, toxic gas leak).</td>
+              <td class="p-3.5 text-red-400 font-bold">&lt; 15 Mins</td>
+              <td class="p-3.5 text-slate-300 font-sans">Instant siren, automated grid trip, multi-unit tactical deployment.</td>
+            </tr>
+            <tr class="bg-orange-500/10">
+              <td class="p-3.5 font-bold text-orange-400">LEVEL 4</td>
+              <td class="p-3.5 font-bold text-white">Severe Emergency</td>
+              <td class="p-3.5 text-slate-300 font-sans">Major structural failure requiring engineering containment (sinkholes across road lanes, main 36" water trunk rupture, neighborhood blackout).</td>
+              <td class="p-3.5 text-orange-400 font-bold">&lt; 2 Hours</td>
+              <td class="p-3.5 text-slate-300 font-sans">Heavy equipment mobilization, traffic perimeter lockdown.</td>
+            </tr>
+            <tr>
+              <td class="p-3.5 font-bold text-yellow-400">LEVEL 3</td>
+              <td class="p-3.5 font-bold text-white">Moderate Hazard</td>
+              <td class="p-3.5 text-slate-300 font-sans">Substantial localized disruption with low mortality risk (blocked arterial drainage during rain, broken local water lines).</td>
+              <td class="p-3.5 text-yellow-400 font-bold">&lt; 6 Hours</td>
+              <td class="p-3.5 text-slate-300 font-sans">Dispatched within current operational shift.</td>
+            </tr>
+            <tr>
+              <td class="p-3.5 font-bold text-blue-400">LEVEL 2</td>
+              <td class="p-3.5 font-bold text-white">Standard Maintenance</td>
+              <td class="p-3.5 text-slate-300 font-sans">Localized non-hazardous wear (isolated potholes, burnt streetlight fixtures).</td>
+              <td class="p-3.5 text-blue-400 font-bold">&lt; 24 Hours</td>
+              <td class="p-3.5 text-slate-300 font-sans">Batch routed to municipal contractor backlog.</td>
+            </tr>
+            <tr>
+              <td class="p-3.5 font-bold text-slate-400">LEVEL 1</td>
+              <td class="p-3.5 font-bold text-white">Cosmetic / Minor</td>
+              <td class="p-3.5 text-slate-300 font-sans">Non-urgent aesthetic maintenance (graffiti, faded road lane markings).</td>
+              <td class="p-3.5 text-slate-400 font-bold">&lt; 72 Hours</td>
+              <td class="p-3.5 text-slate-300 font-sans">Low-priority neighborhood maintenance pool.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Section 7: HITL Gate -->
+    <section id="sec-7" class="space-y-4">
+      <div class="flex items-center space-x-2 text-red-400 font-mono text-xs uppercase tracking-wider">
+        <span>Section 07</span>
+        <span>•</span>
+        <span>Safety Assurance</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white font-display">7. Human-in-the-Loop (HITL) Anti-Hallucination Gate</h2>
+      <p class="text-slate-300 text-sm leading-relaxed">
+        To prevent unverified AI-initiated tactical deployments, the system enforces a non-bypassable <code class="text-red-400 font-mono">humanValidationRequired</code> barrier:
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <span class="text-red-400 font-bold font-mono text-xs block mb-1">RULE 1: High Criticality</span>
+          <p class="text-xs text-slate-300">All Level 4 and Level 5 dispatches require municipal clerk digital signature before tactical sirens sound.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <span class="text-amber-400 font-bold font-mono text-xs block mb-1">RULE 2: Cross-Modal Conflict</span>
+          <p class="text-xs text-slate-300">Tripped if photograph evidence visually conflicts with the acoustic transcript (e.g., audio claims bridge collapsed, image shows minor curb wear).</p>
+        </div>
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <span class="text-blue-400 font-bold font-mono text-xs block mb-1">RULE 3: Acoustic Ambiguity</span>
+          <p class="text-xs text-slate-300">Tripped when rural packet drops or background noise obscures citizen speech beyond confidence bounds.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 8: Spatial Vector Deduplication -->
+    <section id="sec-8" class="space-y-4">
+      <div class="flex items-center space-x-2 text-red-400 font-mono text-xs uppercase tracking-wider">
+        <span>Section 08</span>
+        <span>•</span>
+        <span>Algorithmic Deduplication</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white font-display">8. Semantic & Geospatial Deduplication Engine</h2>
+      <p class="text-slate-300 text-sm leading-relaxed">
+        During disasters, incoming reports are checked against active tickets using a two-stage filter:
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+        <div class="p-4 rounded-xl bg-[#020617] border border-slate-800 space-y-2">
+          <span class="text-blue-400 font-bold uppercase">1. Haversine Geographic Distance</span>
+          <p class="text-slate-400 font-sans">Filters candidates within a 100-meter radius:</p>
+          <div class="p-2.5 bg-slate-900 rounded text-slate-200">
+            d = 2R · arcsin(√(sin²(Δlat/2) + cos(lat1)·cos(lat2)·sin²(Δlng/2)))
+          </div>
+          <p class="text-[11px] text-slate-500">Threshold: d &lt; 0.10 km (100 meters)</p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-[#020617] border border-slate-800 space-y-2">
+          <span class="text-emerald-400 font-bold uppercase">2. 64-D Cosine Vector Match</span>
+          <p class="text-slate-400 font-sans">Evaluates semantic complaint similarity:</p>
+          <div class="p-2.5 bg-slate-900 rounded text-slate-200">
+            Similarity(A, B) = (A · B) / (||A|| · ||B||)
+          </div>
+          <p class="text-[11px] text-slate-500">Threshold: Score ≥ 0.72 flags duplicate cluster</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 9: Cryptographic Seals -->
+    <section id="sec-9" class="space-y-4">
+      <div class="flex items-center space-x-2 text-red-400 font-mono text-xs uppercase tracking-wider">
+        <span>Section 09</span>
+        <span>•</span>
+        <span>Evidentiary Integrity</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white font-display">9. Cryptographic Audit Chain & Digital Seals</h2>
+      <p class="text-slate-300 text-sm leading-relaxed">
+        Every incident creates an immutable SHA-256 digital seal combining the reference ID, timestamp, citizen name, location coordinates, priority score, and municipal category. This ensures legal non-repudiation in judicial or civil defense audits.
+      </p>
+      <div class="p-4 rounded-xl bg-[#020617] border border-slate-800 font-mono text-xs space-y-2">
+        <div class="text-slate-400">Payload Hash Input:</div>
+        <div class="text-slate-300 truncate bg-slate-900 p-2.5 rounded">
+          "BRICS-IND-2026-9481|2026-09-13 14:15 UTC|Aarav Sharma|Outer Ring Road|5|Power"
+        </div>
+        <div class="text-emerald-400">Generated Digital Seal:</div>
+        <div class="text-emerald-300 font-bold bg-slate-900 p-2.5 rounded">
+          SHA256: 7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 11: JSON Schema -->
+    <section id="sec-11" class="space-y-4">
+      <div class="flex items-center space-x-2 text-red-400 font-mono text-xs uppercase tracking-wider">
+        <span>Section 11</span>
+        <span>•</span>
+        <span>Data Protocol</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white font-display">11. Formal API Payload Contract</h2>
+      <div class="p-4 rounded-2xl bg-[#020617] border border-slate-800 font-mono text-xs text-slate-300 overflow-x-auto print-code">
+<pre>
+{
+  "id": "rep-1726200000000-4819",
+  "referenceId": "BRICS-IND-2026-8492",
+  "timestamp": "2026-09-13 14:32 UTC",
+  "citizenName": "Aarav Sharma",
+  "verifiedPhone": "+91 98765 43210",
+  "location": "Outer Ring Road, Bellandur, Bengaluru",
+  "lat": 12.9352,
+  "lng": 77.6946,
+  "finalCategory": "Power",
+  "hazardPriorityScore": 5,
+  "distressScore": 0.88,
+  "humanValidationRequired": true,
+  "humanValidationReason": "CRITICAL HAZARD LEVEL 5: Live 11kV conductor snapped into waterlogged road.",
+  "recommendedDispatchUnit": "BESCOM Rapid Electrical Hazard Squadron",
+  "operationalTasks": [
+    "Remotely trip Substation Feeder 4B to de-energize downed 11kV conductor",
+    "Deploy perimeter danger tape at 30-meter radius around waterlogged zone",
+    "Test for residual capacitive charge before grounding conductors"
+  ],
+  "requiredEquipment": [
+    "Insulated Bucket Truck (46kV Rated)",
+    "Portable Grounding Clusters",
+    "Dewatering Pump"
+  ],
+  "requiredCertifications": [
+    "High-Voltage Linesman Certification (IEEE 1584 / NFPA 70E)"
+  ],
+  "targetResolutionWindow": "< 45 Minutes",
+  "status": "TRIAGED",
+  "cryptographicSeal": "SHA256:d8e8fca2dc0f896fd7cb4cb0031ba249"
+}
+</pre>
+      </div>
+    </section>
+
+    <!-- Approvals & Signatures Footer -->
+    <section class="border-t border-slate-800 pt-8 pb-12">
+      <h3 class="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest mb-4">Official Municipal Sign-off</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono">
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <p class="text-slate-500 mb-1">Architecture Oversight</p>
+          <p class="text-white font-bold">BRICS+ Civic AI Working Group</p>
+          <p class="text-emerald-400 mt-2 font-bold"><i class="fa-solid fa-check-circle mr-1"></i> APPROVED</p>
+        </div>
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <p class="text-slate-500 mb-1">Safety Oversight</p>
+          <p class="text-white font-bold">Municipal Emergency Protocols</p>
+          <p class="text-emerald-400 mt-2 font-bold"><i class="fa-solid fa-check-circle mr-1"></i> HITL MANDATED</p>
+        </div>
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <p class="text-slate-500 mb-1">Data Sovereignty</p>
+          <p class="text-white font-bold">DPDP / GDPR Compliance Board</p>
+          <p class="text-emerald-400 mt-2 font-bold"><i class="fa-solid fa-check-circle mr-1"></i> ZERO-PII CERTIFIED</p>
+        </div>
+      </div>
+      <div class="mt-8 text-center text-xs font-mono text-slate-500">
+        CYPHER Municipal Emergency Architecture Specification • Version 4.2 • Autonomous Civic Defense Engine
+      </div>
+    </section>
+
+  </main>
+
+</body>
+</html>

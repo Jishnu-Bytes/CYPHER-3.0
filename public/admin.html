@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Command Center • CYPHER BRICS+</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Maps Platform Dynamic Bootstrap Loader (Source: Google Maps Platform Code Assist) -->
+  <script>
+    // prettier-ignore
+    (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+      v: "weekly"
+    });
+  </script>
+  <!-- Fallback GIS Libraries -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/i18n.js"></script>
+  <script src="/cypher-shared.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#020617',
+              card: '#0f172a',
+              surface: '#1e293b',
+              accent: '#3b82f6',
+              danger: '#ef4444',
+              success: '#10b981',
+              warning: '#f59e0b',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #020617;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+    }
+    .admin-card {
+      background: #0f172a;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    .priority-5-row {
+      background: rgba(239, 68, 68, 0.08);
+      border-left: 3px solid #ef4444;
+    }
+    .priority-4-row {
+      background: rgba(249, 115, 22, 0.06);
+      border-left: 3px solid #f97316;
+    }
+    .priority-3-row {
+      border-left: 3px solid #eab308;
+    }
+    .priority-2-row {
+      border-left: 3px solid #3b82f6;
+    }
+    .priority-1-row {
+      border-left: 3px solid #64748b;
+    }
+    @keyframes pulseFlash {
+      0% { background-color: rgba(59, 130, 246, 0.35); }
+      100% { background-color: transparent; }
+    }
+    .new-report-flash {
+      animation: pulseFlash 2.5s ease-out;
+    }
+    /* Leaflet Dark Theme Overrides */
+    .leaflet-container {
+      background-color: #020617 !important;
+      font-family: 'Inter', sans-serif !important;
+    }
+    .leaflet-popup-content-wrapper {
+      background: #0f172a !important;
+      color: #f8fafc !important;
+      border: 1px solid #334155 !important;
+      border-radius: 14px !important;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.4) !important;
+      padding: 0 !important;
+    }
+    .leaflet-popup-content {
+      margin: 12px 14px !important;
+      line-height: 1.4 !important;
+    }
+    .leaflet-popup-tip {
+      background: #0f172a !important;
+      border: 1px solid #334155 !important;
+    }
+    .leaflet-bar a {
+      background-color: #0f172a !important;
+      color: #cbd5e1 !important;
+      border-bottom: 1px solid #334155 !important;
+    }
+    .leaflet-bar a:hover {
+      background-color: #1e293b !important;
+      color: #fff !important;
+    }
+    @keyframes radarPulse {
+      0% { transform: scale(1); opacity: 0.9; }
+      70% { transform: scale(2.8); opacity: 0; }
+      100% { transform: scale(3.2); opacity: 0; }
+    }
+    .gis-beacon-ping {
+      position: absolute;
+      border-radius: 9999px;
+      animation: radarPulse 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+    /* Google Maps InfoWindow & Advanced Marker Dark Theme */
+    .gm-style .gm-style-iw-c {
+      background-color: #0b1329 !important;
+      border: 1px solid #1e293b !important;
+      border-radius: 16px !important;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.5) !important;
+      padding: 0 !important;
+    }
+    .gm-style .gm-style-iw-d {
+      overflow: auto !important;
+      padding: 12px 14px !important;
+      color: #f1f5f9 !important;
+    }
+    .gm-style .gm-style-iw-tc::after {
+      background: #0b1329 !important;
+      border: 1px solid #1e293b !important;
+    }
+    .gm-style button.gm-ui-hover-effect {
+      filter: invert(1) !important;
+      top: 6px !important;
+      right: 6px !important;
+    }
+    .gmp-problem-marker {
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .gmp-problem-marker:hover {
+      transform: scale(1.22);
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body class="min-h-[100dvh] flex flex-col justify-between selection:bg-[#ef4444] selection:text-white bg-[#020617]">
+
+  <!-- Admin Login Modal -->
+  <div id="login-modal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-[#0f172a] w-full max-w-md rounded-2xl p-8 border border-slate-700 shadow-2xl">
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-[#ef4444] text-black font-bold flex items-center justify-center text-lg italic font-display">
+          C
+        </div>
+        <div>
+          <span class="text-[10px] font-mono text-[#ef4444] uppercase tracking-widest font-bold" data-i18n="adminRestricted">SOVEREIGN RESTRICTED</span>
+          <h2 class="font-display font-bold text-xl text-white" data-i18n="adminGateTitle">CYPHER Admin Command Gate</h2>
+        </div>
+      </div>
+
+      <form id="admin-login-form" onsubmit="handleAdminLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-mono text-slate-300 mb-1" data-i18n="adminCallsign">Commander Call-sign</label>
+          <input type="text" id="admin-username" value="admin" required class="w-full bg-[#020617] border border-slate-700 focus:border-red-500 rounded-xl px-4 py-2.5 text-white font-mono text-sm focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono text-slate-300 mb-1" data-i18n="adminSecurityKey">Sovereign Security Key</label>
+          <input type="password" id="admin-password" value="brics2026admin" required class="w-full bg-[#020617] border border-slate-700 focus:border-red-500 rounded-xl px-4 py-2.5 text-white font-mono text-sm focus:outline-none">
+        </div>
+
+        <div id="login-error-msg" class="hidden text-xs text-[#ef4444] font-mono"></div>
+
+        <button type="submit" id="btn-login" class="w-full py-3 rounded-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-display font-bold text-sm tracking-wide shadow-lg shadow-red-500/20 transition flex items-center justify-center space-x-2">
+          <span data-i18n="adminAuthenticate">Authenticate Clearance</span>
+          <i class="fa-solid fa-key text-xs"></i>
+        </button>
+
+        <div class="text-center pt-2">
+          <a href="/" class="text-xs text-slate-400 hover:text-white font-mono">← <span data-i18n="returnToCitizen">Return to Citizen Intake</span></a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Immersive Header Bar -->
+  <header class="h-16 bg-[#020617] border-b border-slate-800 flex items-center justify-between px-4 sm:px-6 shadow-2xl sticky top-0 z-40">
+    <div class="flex items-center gap-3">
+      <a href="/" class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-[#ef4444] rounded flex items-center justify-center font-bold text-black italic text-lg shadow-md shadow-red-500/20 font-display">C</div>
+        <h1 class="text-base sm:text-xl font-black tracking-tighter text-white uppercase font-display">
+          <span data-i18n="platformName">CYPHER</span> <span class="text-[#ef4444]" data-i18n="adminHeaderTitle">• BRICS+ ADMIN</span>
+        </h1>
+      </a>
+    </div>
+
+    <!-- Live WebSocket Connection, Language Selector & Controls -->
+    <div class="flex items-center gap-2 sm:gap-4 text-xs font-mono">
+      <div class="hidden sm:flex items-center gap-2 px-3 py-1 bg-slate-800/50 rounded-full border border-slate-700">
+        <div id="socket-indicator" class="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></div>
+        <span id="socket-label" class="text-xs font-mono uppercase text-slate-300" data-i18n="websocketsLive">WebSockets Live</span>
+      </div>
+
+      <!-- Real-time Admin Language Switcher -->
+      <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-xl">
+        <i class="fa-solid fa-globe text-blue-400 text-xs"></i>
+        <select id="admin-lang-selector" onchange="onAdminLanguageChanged(this.value)" class="bg-transparent text-xs font-mono text-white focus:outline-none cursor-pointer pr-1">
+          <option value="en" class="bg-slate-900 text-white">English</option>
+          <option value="hi" class="bg-slate-900 text-white">हिन्दी (Hindi)</option>
+          <option value="te" class="bg-slate-900 text-white">తెలుగు (Telugu)</option>
+          <option value="ta" class="bg-slate-900 text-white">தமிழ் (Tamil)</option>
+          <option value="bn" class="bg-slate-900 text-white">বাংলা (Bengali)</option>
+          <option value="mr" class="bg-slate-900 text-white">मराठी (Marathi)</option>
+          <option value="ru" class="bg-slate-900 text-white">Русский (Russian)</option>
+          <option value="zh" class="bg-slate-900 text-white">中文 (Mandarin)</option>
+          <option value="yue" class="bg-slate-900 text-white">粤语 (Cantonese)</option>
+          <option value="pt" class="bg-slate-900 text-white">Português (Brasil)</option>
+          <option value="zu" class="bg-slate-900 text-white">isiZulu</option>
+          <option value="xh" class="bg-slate-900 text-white">isiXhosa</option>
+          <option value="af" class="bg-slate-900 text-white">Afrikaans</option>
+          <option value="de" class="bg-slate-900 text-white">Deutsch (German)</option>
+          <option value="it" class="bg-slate-900 text-white">Italiano (Italian)</option>
+          <option value="tt" class="bg-slate-900 text-white">Татарча (Tatar)</option>
+          <option value="ce" class="bg-slate-900 text-white">Нохчийн (Chechen)</option>
+          <option value="ba" class="bg-slate-900 text-white">Башҡорт (Bashkir)</option>
+          <option value="tco" class="bg-slate-900 text-white">Tikuna (Ticuna)</option>
+        </select>
+      </div>
+
+      <button onclick="injectTestAlert()" class="hidden md:flex px-3 py-1.5 rounded-full bg-[#ef4444]/20 hover:bg-[#ef4444]/30 border border-[#ef4444]/30 text-[#ef4444] text-xs font-mono transition items-center space-x-1.5 font-bold">
+        <i class="fa-solid fa-bolt text-red-400"></i>
+        <span data-i18n="simulateAlert">Simulate Level 5 Alert</span>
+      </button>
+
+      <a href="/" class="px-3 py-1.5 rounded-full border border-slate-700 hover:border-slate-500 text-slate-400 hover:text-white transition" data-i18n="citizenPortal">
+        Citizen Portal
+      </a>
+
+      <button onclick="logoutAdmin()" class="text-slate-400 hover:text-[#ef4444] transition p-1" title="Logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Dashboard Content -->
+  <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- KPI Metric Cards Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      
+      <div class="admin-card p-5 rounded-2xl border border-slate-800">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono" data-i18n="totalLogged">TOTAL LOGGED</span>
+          <i class="fa-solid fa-list-check text-blue-400"></i>
+        </div>
+        <div id="stat-total" class="font-mono font-bold text-3xl text-white">0</div>
+        <div class="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-3">
+          <div class="h-full bg-blue-500" style="width: 80%"></div>
+        </div>
+      </div>
+
+      <div class="admin-card p-5 rounded-2xl border border-slate-800">
+        <div class="flex items-center justify-between text-red-400 mb-2">
+          <span class="text-[10px] font-bold text-[#ef4444] uppercase tracking-widest font-mono" data-i18n="level5Critical">LEVEL 5 CRITICAL</span>
+          <i class="fa-solid fa-triangle-exclamation animate-bounce text-[#ef4444]"></i>
+        </div>
+        <div id="stat-critical" class="font-mono font-bold text-3xl text-[#ef4444]">0</div>
+        <div class="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-3">
+          <div class="h-full bg-[#ef4444]" style="width: 100%"></div>
+        </div>
+      </div>
+
+      <div class="admin-card p-5 rounded-2xl border border-slate-800">
+        <div class="flex items-center justify-between text-yellow-400 mb-2">
+          <span class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest font-mono" data-i18n="dispatchedUnits">DISPATCHED UNITS</span>
+          <i class="fa-solid fa-truck-fast text-yellow-400"></i>
+        </div>
+        <div id="stat-dispatched" class="font-mono font-bold text-3xl text-yellow-400">0</div>
+        <div class="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-3">
+          <div class="h-full bg-yellow-500" style="width: 65%"></div>
+        </div>
+      </div>
+
+      <div class="admin-card p-5 rounded-2xl border border-slate-800">
+        <div class="flex items-center justify-between text-emerald-400 mb-2">
+          <span class="text-[10px] font-bold text-[#10b981] uppercase tracking-widest font-mono" data-i18n="geminiAccuracy">GEMINI ACCURACY</span>
+          <i class="fa-solid fa-brain text-[#10b981]"></i>
+        </div>
+        <div class="font-mono font-bold text-3xl text-[#10b981]">99.4%</div>
+        <div class="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-3">
+          <div class="h-full bg-[#10b981]" style="width: 99%"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Filters & Search Toolbar -->
+    <div class="admin-card p-4 rounded-2xl border border-slate-800 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      
+      <!-- Search Input -->
+      <div class="relative w-full md:w-80">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+        <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Search Ref ID, citizen, location..." class="w-full bg-[#020617] border border-slate-700 focus:border-blue-500 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none font-mono">
+      </div>
+
+      <!-- Quick Filter Buttons -->
+      <div class="flex flex-wrap items-center gap-2 w-full md:w-auto text-xs font-mono">
+        
+        <select id="filter-country" onchange="applyFilters()" class="bg-[#020617] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none">
+          <option value="ALL">All Nations (🇮🇳 🇧🇷 🇿🇦 🇷🇺 🇨🇳)</option>
+          <option value="India">🇮🇳 India</option>
+          <option value="Brazil">🇧🇷 Brazil</option>
+          <option value="South Africa">🇿🇦 South Africa</option>
+          <option value="Russia">🇷🇺 Russia</option>
+          <option value="China">🇨🇳 China</option>
+        </select>
+
+        <select id="filter-category" onchange="applyFilters()" class="bg-[#020617] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none">
+          <option value="ALL">All Problem Domains</option>
+          <option value="Power">⚡ Power & Electricity</option>
+          <option value="Water">💧 Water & Sanitation</option>
+          <option value="Roads">🛣️ Roads & Highways</option>
+          <option value="Transport">🚆 Public Transport</option>
+          <option value="Infrastructure">🏗️ Infrastructure & Bridges</option>
+        </select>
+
+        <select id="filter-priority" onchange="applyFilters()" class="bg-[#020617] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none">
+          <option value="ALL">All Hazard Scores (1-5)</option>
+          <option value="5">Priority 5/5 (Life Critical)</option>
+          <option value="4">Priority 4/5 (Severe)</option>
+          <option value="3">Priority 3/5 (Moderate)</option>
+          <option value="2">Priority 2/5 (Standard)</option>
+          <option value="1">Priority 1/5 (Cosmetic)</option>
+        </select>
+
+        <button onclick="refreshData()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white" title="Refresh Feed">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- Real-Time Google Maps GIS Command Center & Municipal Dispatch Dashboard -->
+    <div class="admin-card rounded-2xl border border-slate-800 overflow-hidden shadow-2xl mb-8">
+      <div class="px-6 py-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4 bg-slate-900/80">
+        <div class="flex items-center space-x-3">
+          <div class="relative flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/20 text-[#ef4444] border border-red-500/30">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-display font-bold text-base text-white">Google Maps Real-Time GIS Command Center</h3>
+              <span id="gmp-status-pill" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-bold tracking-wider flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>GOOGLE MAPS PLATFORM</span>
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 font-mono">Interactive Advanced Markers color-coded by Gemini severity score (1–5) for rapid civic emergency response</p>
+          </div>
+        </div>
+
+        <!-- Quick Region Zoom & Map Controls -->
+        <div class="flex items-center flex-wrap gap-2 text-xs font-mono">
+          <button onclick="zoomToRegion('ALL')" id="map-btn-ALL" class="px-3 py-1.5 rounded-lg bg-red-600 text-white font-bold transition shadow-sm">
+            🌐 All BRICS+
+          </button>
+          <button onclick="zoomToRegion('India')" id="map-btn-India" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            🇮🇳 India
+          </button>
+          <button onclick="zoomToRegion('Brazil')" id="map-btn-Brazil" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            🇧🇷 Brazil
+          </button>
+          <button onclick="zoomToRegion('South Africa')" id="map-btn-SouthAfrica" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            🇿🇦 South Africa
+          </button>
+          <button onclick="zoomToRegion('Russia')" id="map-btn-Russia" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            🇷🇺 Russia
+          </button>
+          <button onclick="zoomToRegion('China')" id="map-btn-China" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            🇨🇳 China
+          </button>
+          <button onclick="toggleHeatmapDensity()" id="btn-toggle-heat" class="ml-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition flex items-center gap-1.5" title="Toggle Problem Density Circles">
+            <i class="fa-solid fa-fire-flame-curved text-amber-400"></i>
+            <span id="heat-label">Density: OFF</span>
+          </button>
+          <button onclick="openGmpKeyModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition flex items-center gap-1" title="Google Maps API Key & Free Demo Key">
+            <i class="fa-solid fa-key text-red-400"></i>
+            <span>API Key</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Map Container -->
+      <div class="relative w-full h-[490px] bg-[#020617]">
+        <div id="gis-map" class="w-full h-full z-10"></div>
+        
+        <!-- Interactive Floating Map Legend -->
+        <div class="absolute bottom-4 left-4 z-20 bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl p-3 text-xs font-mono shadow-xl max-w-xs space-y-2 pointer-events-auto">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-1 text-[11px] font-bold text-slate-300">
+            <span>GEMINI SEVERITY SCORE</span>
+            <span id="map-active-count" class="text-[#ef4444]">0 Plotted</span>
+          </div>
+          <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-[#ef4444] shadow-sm shadow-red-500/50 flex-shrink-0 animate-pulse"></span>
+              <span class="text-red-400 font-bold">5 • Critical Crisis</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-[#f97316] flex-shrink-0"></span>
+              <span class="text-orange-400">4 • Severe Risk</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-[#f59e0b] flex-shrink-0"></span>
+              <span class="text-amber-400">3 • Moderate</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-[#3b82f6] flex-shrink-0"></span>
+              <span class="text-blue-400">2 • Minor Standard</span>
+            </div>
+            <div class="flex items-center gap-2 col-span-2">
+              <span class="w-3 h-3 rounded-full bg-[#64748b] flex-shrink-0"></span>
+              <span class="text-slate-400">1 • Low / Cosmetic Hazard</span>
+            </div>
+          </div>
+          <div class="pt-1 text-[10px] text-slate-500 border-t border-slate-800/80 flex items-center justify-between">
+            <span>⚡ Click marker to view & dispatch</span>
+            <span class="text-emerald-400 font-bold flex items-center gap-1">
+              <i class="fa-brands fa-google text-[10px]"></i> Google Maps
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Google Maps API Key Setup Modal -->
+    <div id="gmp-key-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm hidden flex items-center justify-center p-4">
+      <div class="bg-[#0f172a] w-full max-w-lg rounded-2xl p-6 border border-slate-700 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-map text-red-400"></i>
+            <h3 class="text-base font-display font-bold text-white">Google Maps Platform Integration</h3>
+          </div>
+          <button onclick="closeGmpKeyModal()" class="text-slate-400 hover:text-white p-1">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed font-sans">
+          The admin dashboard integrates the official Google Maps JavaScript API with interactive Advanced Markers to plot municipal incidents in real time.
+        </p>
+        <div class="p-3.5 bg-blue-950/40 border border-blue-500/30 rounded-xl space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-blue-300">Free Prototyping Maps Demo Key</span>
+            <a href="https://mapsplatform.google.com/maps-demo-key?utm_campaign=gmp_mcp_codeassist_v1_aistudio" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-mono text-[11px] font-bold inline-flex items-center gap-1 transition">
+              <span>Get Demo Key</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </a>
+          </div>
+          <p class="text-[11px] text-slate-400 font-mono">
+            No Google Cloud project or billing setup required for the Maps Demo Key.
+          </p>
+        </div>
+        <div>
+          <label class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Google Maps API Key or Demo Key</label>
+          <input type="password" id="input-gmp-key" placeholder="AIzaSy..." class="w-full bg-[#020617] border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-red-500 focus:outline-none">
+        </div>
+        <div class="flex items-center justify-between pt-2">
+          <button onclick="clearGmpKey()" class="text-slate-400 hover:text-red-400 text-xs font-mono">Reset to Server Default</button>
+          <div class="space-x-2">
+            <button onclick="closeGmpKeyModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono">Cancel</button>
+            <button onclick="saveGmpKey()" class="px-4 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs font-mono shadow-md shadow-red-500/20">Connect Google Maps</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real-Time Complaints Priority Table -->
+    <div class="admin-card rounded-2xl border border-slate-800 overflow-hidden shadow-2xl mb-8">
+      
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full bg-[#ef4444] animate-ping"></span>
+          <h3 class="font-display font-bold text-base text-white" data-i18n="livePriorityQueue">Live Real-Time Complaint Priority Queue</h3>
+        </div>
+        <span class="text-xs font-mono text-slate-400" data-i18n="prioritySortNotice">Pre-sorted: Highest Priority (5/5) → Lowest (1/5)</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs font-sans">
+          <thead class="bg-[#020617] text-slate-400 font-mono text-[11px] uppercase tracking-wider border-b border-slate-800">
+            <tr>
+              <th class="px-5 py-3" data-i18n="colPriority">Priority</th>
+              <th class="px-5 py-3" data-i18n="colRefId">Ref ID & Nation</th>
+              <th class="px-5 py-3" data-i18n="colDomain">Domain & Category</th>
+              <th class="px-5 py-3" data-i18n="colCitizen">Citizen & Location</th>
+              <th class="px-5 py-3" data-i18n="colSummary">AI Incident Summary</th>
+              <th class="px-5 py-3" data-i18n="colMedia">Media</th>
+              <th class="px-5 py-3" data-i18n="colStatus">Status</th>
+              <th class="px-5 py-3 text-right" data-i18n="colActions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="complaints-table-body" class="divide-y divide-slate-800/60 font-mono">
+            <tr>
+              <td colspan="8" class="text-center py-10 text-slate-500">
+                <i class="fa-solid fa-circle-notch fa-spin text-lg mb-2 block"></i>
+                Connecting to sovereign dispatch matrix...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Incident Detail Modal -->
+  <div id="detail-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-[#0f172a] w-full max-w-3xl max-h-[85dvh] sm:max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl p-5 sm:p-8 border border-slate-700 shadow-2xl transition-all">
+      
+      <!-- Mobile Drag Handle -->
+      <div class="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-3 sm:hidden"></div>
+
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+        <div>
+          <span id="modal-ref-id" class="text-xs font-mono text-blue-400 font-bold tracking-wider">BRICS-IND-2026-XXXX</span>
+          <h2 id="modal-title" class="font-display font-bold text-xl text-white" data-i18n="incidentDossierTitle">Incident Dispatch Dossier</h2>
+        </div>
+        <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white p-2 text-lg min-h-[44px] min-w-[44px] flex items-center justify-center active:scale-95 transition-transform" aria-label="Close dossier">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-5 text-xs font-mono">
+        
+        <div id="modal-priority-banner" class="p-4 rounded-xl flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <span id="modal-score-badge" class="px-3 py-1 rounded-full font-bold text-sm bg-red-600 text-white">Score: 5/5</span>
+            <span id="modal-category" class="font-display font-bold text-white text-base">Power Hazard</span>
+          </div>
+          <span id="modal-timestamp" class="text-slate-300">2026-08-19 14:15 UTC</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#020617] border border-slate-800">
+          <div>
+            <span class="text-slate-400 block text-[10px]" data-i18n="citizenLabel">Verified Citizen:</span>
+            <span id="modal-citizen" class="text-white font-bold">Thiago Silva (Brazil)</span>
+            <span id="modal-doctype" class="text-[10px] text-[#10b981] block">RG (Redacted)</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px]" data-i18n="locationBadge">Location:</span>
+            <span id="modal-location" class="text-white font-bold">Av. Paulista, São Paulo</span>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-blue-950/40 border border-blue-500/30">
+          <span class="text-[10px] text-blue-400 font-bold block uppercase mb-1" data-i18n="recommendedDispatchLabel">Dispatch Recommendation:</span>
+          <span id="modal-dispatch-unit" class="text-sm font-bold text-white leading-snug font-sans italic">Rapid Response Structural Unit (Paulista Sector)</span>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-[#020617] border border-slate-800 font-sans">
+          <span class="text-[10px] font-mono text-slate-400 uppercase block mb-1" data-i18n="summaryLabel">Gemini Hazard Assessment Summary:</span>
+          <p id="modal-summary" class="text-slate-200 text-sm leading-relaxed italic"></p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="p-3.5 rounded-xl bg-[#020617] border border-slate-800 font-sans">
+            <span class="text-[10px] font-mono text-slate-400 uppercase block mb-1" data-i18n="transcriptionLabel">Native Speech Transcription:</span>
+            <p id="modal-transcription" class="text-slate-300 italic text-xs"></p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-[#020617] border border-slate-800 font-sans">
+            <span class="text-[10px] font-mono text-slate-400 uppercase block mb-1" data-i18n="translationLabel">Official English Translation:</span>
+            <p id="modal-translation" class="text-slate-300 text-xs"></p>
+          </div>
+        </div>
+
+        <!-- Pre-Repair vs Post-Repair Visual Inspection Matrix -->
+        <div class="p-4 rounded-xl bg-[#020617] border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] text-slate-300 font-bold uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-camera-rotate text-blue-400"></i>
+              <span>Dual-Evidence Repair Verification Matrix</span>
+            </span>
+            <span id="modal-resolution-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border">
+              Awaiting Verification
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <!-- Pre-Repair Photo Card -->
+            <div class="bg-slate-900/90 rounded-xl p-3 border border-slate-800">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] uppercase font-bold text-red-400 flex items-center gap-1">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>Pre-Repair (Hazard)</span>
+                </span>
+                <span class="text-[10px] text-slate-500 font-mono">Original Upload</span>
+              </div>
+              <div class="relative w-full h-40 rounded-lg overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
+                <img id="modal-pre-photo" src="" alt="Pre-Repair Hazard" class="w-full h-full object-cover hidden">
+                <div id="modal-pre-placeholder" class="text-center text-slate-600 p-3">
+                  <i class="fa-solid fa-image text-2xl mb-1 block"></i>
+                  <span class="text-[11px]">No pre-repair photo logged</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Post-Repair Photo Card -->
+            <div class="bg-slate-900/90 rounded-xl p-3 border border-slate-800">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] uppercase font-bold text-emerald-400 flex items-center gap-1">
+                  <i class="fa-solid fa-check-double"></i>
+                  <span>Post-Repair (Resolution)</span>
+                </span>
+                <span class="text-[10px] text-slate-500 font-mono">Field Crew</span>
+              </div>
+              <div class="relative w-full h-40 rounded-lg overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
+                <img id="modal-post-photo" src="" alt="Post-Repair Fix" class="w-full h-full object-cover hidden">
+                <div id="modal-post-placeholder" class="text-center text-slate-600 p-3">
+                  <i class="fa-solid fa-wrench text-2xl mb-1 block text-slate-600"></i>
+                  <span class="text-[11px] block">No repair photo uploaded</span>
+                  <label class="mt-2 inline-block px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded cursor-pointer text-[10px] font-mono border border-slate-700 transition">
+                    <i class="fa-solid fa-upload mr-1"></i> Upload Evidence
+                    <input type="file" accept="image/*" class="hidden" onchange="handlePostRepairUpload(event)">
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Verification Quality Score & Notes -->
+          <div id="modal-verify-results" class="p-3 rounded-lg bg-slate-900/80 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] text-slate-400 font-mono">Gemini 2.5 Flash Quality Score:</span>
+              <span id="modal-quality-score-text" class="text-sm font-bold font-mono text-slate-300">--%</span>
+            </div>
+            <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+              <div id="modal-quality-score-bar" class="h-full bg-slate-600 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <p id="modal-quality-notes" class="text-[11px] text-slate-300 italic font-sans">
+              Click the verification button below to trigger multimodal comparison between pre and post-repair states.
+            </p>
+          </div>
+
+          <!-- Verify Action Button -->
+          <div class="pt-1">
+            <button id="btn-verify-repair" onclick="triggerRepairVerification()" class="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-mono font-bold text-xs shadow-lg shadow-emerald-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer">
+              <i class="fa-solid fa-brain"></i>
+              <span>Verify Repair with Gemini 2.5 Flash</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center space-x-2">
+            <span class="text-slate-400 text-xs" data-i18n="updateDispatchState">Update Dispatch State:</span>
+            <button onclick="locateFromModal()" class="min-h-[44px] px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 flex items-center gap-1.5 transition active:scale-95 cursor-pointer" title="Pinpoint this incident on Google Map">
+              <i class="fa-solid fa-map-location-dot text-red-400"></i>
+              <span>Pinpoint on Map</span>
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="updateReportStatus('Pending')" class="min-h-[44px] px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 active:scale-95 transition-transform cursor-pointer">Pending</button>
+            <button onclick="updateReportStatus('Dispatched')" class="min-h-[44px] px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs active:scale-95 transition-transform cursor-pointer">Unit Dispatched</button>
+            <button onclick="updateReportStatus('In Progress')" class="min-h-[44px] px-3.5 py-2 rounded-xl bg-yellow-600 hover:bg-yellow-500 text-white text-xs active:scale-95 transition-transform cursor-pointer">In Progress</button>
+            <button onclick="updateReportStatus('Resolved')" class="min-h-[44px] px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs active:scale-95 transition-transform cursor-pointer">Resolved</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Immersive Footer -->
+  <footer class="h-10 bg-[#020617] border-t border-slate-800 flex items-center justify-between px-6 text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+    <p data-i18n="encryptionNotice">Encryption: 256-bit Civic Guard • BRICS Cluster 09</p>
+    <div class="flex items-center gap-4">
+      <span class="text-[#10b981] font-bold" data-i18n="apiStable">● API STABLE</span>
+      <span class="text-slate-600"><i class="fa-solid fa-lock text-xs"></i></span>
+    </div>
+  </footer>
+
+  <script>
+    let allReports = [];
+    let activeSelectedReport = null;
+    let socket = null;
+    let gisMap = null; // Leaflet instance fallback
+    let markerClusterGroup = null;
+    let heatDensityLayer = null;
+    let gmpMap = null; // Google Maps Map instance
+    let gmpInfoWindow = null;
+    let gmpMarkers = [];
+    let gmpCircles = [];
+    let isGoogleMapsLoaded = false;
+    let googleMapsApiKey = '';
+    let showHeatDensity = false;
+    let currentMapRegion = 'ALL';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedLang = getSavedLanguage();
+      document.getElementById('admin-lang-selector').value = savedLang;
+      applyCypherTranslations(savedLang);
+
+      const token = sessionStorage.getItem('brics_admin_token');
+      if (token) {
+        document.getElementById('login-modal').classList.add('hidden');
+        initGisMap();
+        initSocket();
+        loadReports();
+      } else {
+        document.getElementById('login-modal').classList.remove('hidden');
+      }
+    });
+
+    function onAdminLanguageChanged(langKey) {
+      switchCypherLanguage(langKey);
+      applyFilters();
+    }
+
+    async function handleAdminLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('admin-username').value.trim();
+      const p = document.getElementById('admin-password').value.trim();
+      const err = document.getElementById('login-error-msg');
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const json = await res.json();
+        if (json.success && json.token) {
+          sessionStorage.setItem('brics_admin_token', json.token);
+          document.getElementById('login-modal').classList.add('hidden');
+          initGisMap();
+          initSocket();
+          loadReports();
+        } else {
+          err.textContent = json.error || "Authentication failed. Access Denied.";
+          err.classList.remove('hidden');
+        }
+      } catch(e) {
+        err.textContent = "Server error during authentication.";
+        err.classList.remove('hidden');
+      }
+    }
+
+    function logoutAdmin() {
+      sessionStorage.removeItem('brics_admin_token');
+      window.location.reload();
+    }
+
+    function initSocket() {
+      try {
+        socket = io();
+        const indicator = document.getElementById('socket-indicator');
+        const label = document.getElementById('socket-label');
+
+        socket.on('connect', () => {
+          indicator.className = "w-2 h-2 rounded-full bg-[#10b981] animate-pulse";
+          label.textContent = "WebSockets Live";
+        });
+
+        socket.on('disconnect', () => {
+          indicator.className = "w-2 h-2 rounded-full bg-[#ef4444]";
+          label.textContent = "Offline (Reconnecting)";
+        });
+
+        socket.on('initialReports', (reports) => {
+          allReports = reports;
+          sortReports();
+          applyFilters();
+          updateKPIs();
+          updateGisMap();
+        });
+
+        socket.on('newReport', (report) => {
+          allReports.unshift(report);
+          sortReports();
+          applyFilters(report.id);
+          updateKPIs();
+          updateGisMap();
+          playAlertChime();
+        });
+
+        socket.on('statusUpdated', (updatedRep) => {
+          const index = allReports.findIndex(r => r.id === updatedRep.id);
+          if (index !== -1) {
+            allReports[index] = updatedRep;
+            sortReports();
+            applyFilters();
+            updateKPIs();
+            updateGisMap();
+          }
+          if (activeSelectedReport && activeSelectedReport.id === updatedRep.id) {
+            activeSelectedReport = updatedRep;
+          }
+        });
+
+      } catch(e) {
+        console.warn("Socket.io init notice:", e);
+      }
+    }
+
+    function playAlertChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+      } catch(e) {}
+    }
+
+    async function loadReports() {
+      try {
+        const res = await fetch('/api/reports');
+        const json = await res.json();
+        if (json.success && json.reports) {
+          allReports = json.reports;
+          sortReports();
+          applyFilters();
+          updateKPIs();
+          updateGisMap();
+        }
+      } catch(err) {
+        console.error(err);
+      }
+    }
+
+    function refreshData() {
+      loadReports();
+    }
+
+    function sortReports() {
+      allReports.sort((a, b) => {
+        if (b.hazardPriorityScore !== a.hazardPriorityScore) {
+          return b.hazardPriorityScore - a.hazardPriorityScore;
+        }
+        return b.createdAt - a.createdAt;
+      });
+    }
+
+    function updateKPIs() {
+      document.getElementById('stat-total').textContent = allReports.length;
+      const criticalCount = allReports.filter(r => r.hazardPriorityScore === 5).length;
+      document.getElementById('stat-critical').textContent = criticalCount;
+      const dispatchedCount = allReports.filter(r => r.status === 'Dispatched' || r.status === 'In Progress').length;
+      document.getElementById('stat-dispatched').textContent = dispatchedCount;
+    }
+
+    function applyFilters(highlightId = null) {
+      const search = document.getElementById('filter-search').value.toLowerCase();
+      const country = document.getElementById('filter-country').value;
+      const category = document.getElementById('filter-category').value;
+      const priority = document.getElementById('filter-priority').value;
+
+      const filtered = allReports.filter(r => {
+        if (country !== 'ALL' && !r.country.toLowerCase().includes(country.toLowerCase())) return false;
+        if (category !== 'ALL' && r.finalCategory !== category && r.problemDomain !== category) return false;
+        if (priority !== 'ALL' && String(r.hazardPriorityScore) !== priority) return false;
+        if (search) {
+          const matchStr = `${r.referenceId} ${r.citizenName} ${r.location} ${r.summary} ${r.transcription} ${r.englishTranslation} ${r.problemDomain || ''}`.toLowerCase();
+          if (!matchStr.includes(search)) return false;
+        }
+        return true;
+      });
+
+      renderTable(filtered, highlightId);
+      updateGisMap();
+    }
+
+    function renderTable(reports, highlightId = null) {
+      const tbody = document.getElementById('complaints-table-body');
+      if (!reports || reports.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-8 text-slate-500 font-mono text-xs">
+              No civic hazard reports matching current filters.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = reports.map(r => {
+        const isHighlight = highlightId && r.id === highlightId ? 'new-report-flash' : '';
+        const priorityClass = `priority-${r.hazardPriorityScore}-row`;
+
+        let badgeScore = '';
+        if (r.hazardPriorityScore === 5) {
+          badgeScore = `<span class="px-2 py-0.5 rounded bg-[#ef4444]/20 text-[#ef4444] text-[10px] font-bold border border-[#ef4444]/30">PRIORITY 5/5</span>`;
+        } else if (r.hazardPriorityScore === 4) {
+          badgeScore = `<span class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 text-[10px] font-bold border border-orange-500/30">PRIORITY 4/5</span>`;
+        } else if (r.hazardPriorityScore === 3) {
+          badgeScore = `<span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 text-[10px] font-bold border border-yellow-500/30">PRIORITY 3/5</span>`;
+        } else {
+          badgeScore = `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-semibold">PRIORITY ${r.hazardPriorityScore}/5</span>`;
+        }
+
+        const countryFlag = r.country === 'Brazil' ? '🇧🇷' : r.country === 'South Africa' ? '🇿🇦' : r.country === 'Russia' ? '🇷🇺' : r.country === 'China' ? '🇨🇳' : '🇮🇳';
+
+        let statusBadge = '';
+        if (r.status === 'Dispatched') statusBadge = `<span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold text-[10px]">Dispatched</span>`;
+        else if (r.status === 'In Progress') statusBadge = `<span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 font-bold text-[10px]">In Progress</span>`;
+        else if (r.status === 'Resolved') statusBadge = `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-[#10b981] border border-emerald-500/30 font-bold text-[10px]">Resolved</span>`;
+        else statusBadge = `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 text-[10px]">Pending</span>`;
+
+        const domainText = r.problemDomain ? `${r.problemDomain}` : `${r.finalCategory}`;
+
+        return `
+          <tr class="${priorityClass} ${isHighlight} hover:bg-slate-800/40 transition">
+            <td class="px-5 py-3.5 whitespace-nowrap">${badgeScore}</td>
+            <td class="px-5 py-3.5 whitespace-nowrap">
+              <span class="font-bold text-white block">${r.referenceId}</span>
+              <span class="text-[10px] text-slate-400">${countryFlag} ${r.country}</span>
+            </td>
+            <td class="px-5 py-3.5 whitespace-nowrap font-sans font-semibold text-slate-200">
+              <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[11px] text-blue-300">${domainText}</span>
+            </td>
+            <td class="px-5 py-3.5 whitespace-nowrap">
+              <span class="text-white block font-bold truncate max-w-[150px]">${r.citizenName}</span>
+              <span class="text-[10px] text-slate-400 truncate max-w-[160px] block" title="${r.location}">${r.location}</span>
+            </td>
+            <td class="px-5 py-3.5 font-sans text-slate-300 max-w-xs truncate italic" title="${r.summary}">
+              ${r.summary}
+            </td>
+            <td class="px-5 py-3.5 whitespace-nowrap text-slate-400 space-x-1.5">
+              ${r.hasAudio ? '<i class="fa-solid fa-microphone text-blue-400" title="Audio Attached"></i>' : ''}
+              ${r.hasPhoto ? '<i class="fa-solid fa-image text-emerald-400" title="Photo Attached"></i>' : ''}
+              ${!r.hasAudio && !r.hasPhoto ? '<span class="text-[10px] text-slate-600">Text</span>' : ''}
+            </td>
+            <td class="px-5 py-3.5 whitespace-nowrap">${statusBadge}</td>
+            <td class="px-5 py-3.5 whitespace-nowrap text-right space-x-1.5">
+              <button onclick="locateOnMap('${r.id}')" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] font-mono transition inline-flex items-center gap-1" title="Locate problem on Google Map">
+                <i class="fa-solid fa-map-pin text-red-400 text-[10px]"></i>
+                <span>Map</span>
+              </button>
+              <button onclick="openDetailModal('${r.id}')" class="px-3 py-1 rounded-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-[11px] font-mono transition">
+                Examine
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openDetailModal(reportId) {
+      const rep = allReports.find(r => r.id === reportId);
+      if (!rep) return;
+      activeSelectedReport = rep;
+
+      document.getElementById('modal-ref-id').textContent = rep.referenceId;
+      document.getElementById('modal-timestamp').textContent = rep.timestamp;
+      document.getElementById('modal-citizen').textContent = `${rep.citizenName} (${rep.country})`;
+      document.getElementById('modal-doctype').textContent = rep.documentType;
+      document.getElementById('modal-location').textContent = rep.location;
+      document.getElementById('modal-category').textContent = `${rep.problemDomain || rep.finalCategory} Emergency (${rep.finalCategory})`;
+      document.getElementById('modal-dispatch-unit').textContent = rep.recommendedDispatchUnit;
+      document.getElementById('modal-summary').textContent = `"${rep.summary}"`;
+      document.getElementById('modal-transcription').textContent = `"${rep.transcription}"`;
+      document.getElementById('modal-translation').textContent = rep.englishTranslation;
+
+      const banner = document.getElementById('modal-priority-banner');
+      const scoreBadge = document.getElementById('modal-score-badge');
+      scoreBadge.textContent = `Score: ${rep.hazardPriorityScore}/5`;
+
+      if (rep.hazardPriorityScore >= 4) {
+        banner.className = "p-4 rounded-xl flex items-center justify-between bg-red-950/60 border border-red-500/40";
+        scoreBadge.className = "px-3 py-1 rounded-full font-bold text-sm bg-red-600 text-white";
+      } else {
+        banner.className = "p-4 rounded-xl flex items-center justify-between bg-[#020617] border border-slate-800";
+        scoreBadge.className = "px-3 py-1 rounded-full font-bold text-sm bg-blue-600 text-white";
+      }
+
+      // Pre-Repair Photo Display
+      const prePhotoImg = document.getElementById('modal-pre-photo');
+      const prePlaceholder = document.getElementById('modal-pre-placeholder');
+      const preSrc = rep.preRepairPhotoUrl || rep.photoBase64 || "";
+      if (preSrc) {
+        prePhotoImg.src = preSrc;
+        prePhotoImg.classList.remove('hidden');
+        prePlaceholder.classList.add('hidden');
+      } else {
+        prePhotoImg.src = "";
+        prePhotoImg.classList.add('hidden');
+        prePlaceholder.classList.remove('hidden');
+      }
+
+      // Post-Repair Photo Display
+      const postPhotoImg = document.getElementById('modal-post-photo');
+      const postPlaceholder = document.getElementById('modal-post-placeholder');
+      const postSrc = rep.postRepairPhotoUrl || "";
+      if (postSrc) {
+        postPhotoImg.src = postSrc;
+        postPhotoImg.classList.remove('hidden');
+        postPlaceholder.classList.add('hidden');
+      } else {
+        postPhotoImg.src = "";
+        postPhotoImg.classList.add('hidden');
+        postPlaceholder.classList.remove('hidden');
+      }
+
+      // Resolution Quality Score & Verification Badge
+      const resolutionBadge = document.getElementById('modal-resolution-badge');
+      const scoreBar = document.getElementById('modal-quality-score-bar');
+      const scoreText = document.getElementById('modal-quality-score-text');
+      const notesText = document.getElementById('modal-quality-notes');
+
+      if (rep.resolutionQualityScore && rep.resolutionQualityScore > 0) {
+        const isPassed = rep.resolutionQualityScore >= 70;
+        resolutionBadge.textContent = isPassed ? `Verified (${rep.resolutionQualityScore}%)` : `Review Needed (${rep.resolutionQualityScore}%)`;
+        resolutionBadge.className = isPassed 
+          ? "px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border bg-emerald-950 text-emerald-400 border-emerald-500/40"
+          : "px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border bg-amber-950 text-amber-400 border-amber-500/40";
+        scoreBar.style.width = `${rep.resolutionQualityScore}%`;
+        scoreBar.className = isPassed ? "h-full bg-emerald-500 transition-all duration-500" : "h-full bg-amber-500 transition-all duration-500";
+        scoreText.textContent = `${rep.resolutionQualityScore}%`;
+        scoreText.className = isPassed ? "text-sm font-bold font-mono text-emerald-400" : "text-sm font-bold font-mono text-amber-400";
+        notesText.textContent = rep.verificationNotes || "Gemini 2.5 Flash Autonomous Inspection: Repair work meets municipal quality and structural safety parameters.";
+      } else {
+        resolutionBadge.textContent = "Awaiting Verification";
+        resolutionBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border bg-slate-900 text-slate-400 border-slate-700";
+        scoreBar.style.width = "0%";
+        scoreBar.className = "h-full bg-slate-600 transition-all duration-500";
+        scoreText.textContent = "--%";
+        scoreText.className = "text-sm font-bold font-mono text-slate-400";
+        notesText.textContent = "Click 'Verify Repair with Gemini 2.5 Flash' to trigger automated multimodal image comparison between hazard and resolution.";
+      }
+
+      document.getElementById('detail-modal').classList.remove('hidden');
+    }
+
+    function handlePostRepairUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64 = e.target.result;
+        const postPhotoImg = document.getElementById('modal-post-photo');
+        const postPlaceholder = document.getElementById('modal-post-placeholder');
+        postPhotoImg.src = base64;
+        postPhotoImg.classList.remove('hidden');
+        postPlaceholder.classList.add('hidden');
+        if (activeSelectedReport) {
+          activeSelectedReport.postRepairPhotoUrl = base64;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function triggerRepairVerification() {
+      if (!activeSelectedReport) return;
+      const btn = document.getElementById('btn-verify-repair');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Gemini 2.5 Flash Inspecting Photos...</span>`;
+
+      try {
+        const beforePhoto = activeSelectedReport.preRepairPhotoUrl || activeSelectedReport.photoBase64 || "";
+        const afterPhoto = activeSelectedReport.postRepairPhotoUrl || (document.getElementById('modal-post-photo').src.startsWith('data:') ? document.getElementById('modal-post-photo').src : "");
+
+        const res = await fetch('/api/verify-repair', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-demo-mode': String(window.CYPHER_CONFIG ? window.CYPHER_CONFIG.isDemoMode() : true)
+          },
+          body: JSON.stringify({
+            ticketId: activeSelectedReport.id,
+            beforeImageBase64: beforePhoto,
+            afterImageBase64: afterPhoto
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          activeSelectedReport.resolutionQualityScore = data.resolutionQualityScore;
+          activeSelectedReport.verificationNotes = data.verificationNotes;
+
+          const resolutionBadge = document.getElementById('modal-resolution-badge');
+          const scoreBar = document.getElementById('modal-quality-score-bar');
+          const scoreText = document.getElementById('modal-quality-score-text');
+          const notesText = document.getElementById('modal-quality-notes');
+
+          const isPassed = data.resolutionQualityScore >= 70;
+          resolutionBadge.textContent = isPassed ? `Verified (${data.resolutionQualityScore}%)` : `Review Needed (${data.resolutionQualityScore}%)`;
+          resolutionBadge.className = isPassed 
+            ? "px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border bg-emerald-950 text-emerald-400 border-emerald-500/40"
+            : "px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border bg-amber-950 text-amber-400 border-amber-500/40";
+          scoreBar.style.width = `${data.resolutionQualityScore}%`;
+          scoreBar.className = isPassed ? "h-full bg-emerald-500 transition-all duration-500" : "h-full bg-amber-500 transition-all duration-500";
+          scoreText.textContent = `${data.resolutionQualityScore}%`;
+          scoreText.className = isPassed ? "text-sm font-bold font-mono text-emerald-400" : "text-sm font-bold font-mono text-amber-400";
+          notesText.textContent = data.verificationNotes;
+
+          if (data.isResolved) {
+            activeSelectedReport.status = "Resolved";
+            // Update table row if visible
+            applyFilters();
+          }
+        }
+      } catch (err) {
+        console.error("Verification error:", err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detail-modal').classList.add('hidden');
+    }
+
+    async function updateReportStatus(newStatus) {
+      if (!activeSelectedReport) return;
+      try {
+        const res = await fetch(`/api/reports/${activeSelectedReport.id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: newStatus,
+            note: `Status updated to ${newStatus} via Sovereign Command Center.`,
+            officer: "Chief Dispatch Commander"
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          activeSelectedReport.status = newStatus;
+          closeDetailModal();
+        }
+      } catch(err) {
+        console.error(err);
+      }
+    }
+
+    async function injectTestAlert() {
+      const formData = new FormData();
+      formData.append('citizenName', 'Thiago Silva (Test Simulation)');
+      formData.append('country', 'Brazil');
+      formData.append('language', 'Português (Brasil)');
+      formData.append('documentType', 'RG Verified');
+      formData.append('problemDomain', 'Infrastructure');
+      formData.append('location', 'Av. Paulista 1578, Bela Vista, São Paulo');
+      formData.append('typedComplaint', 'Structural damage to the bridge on Av. Paulista. Large cracks visible in the central support pylon. Debris falling onto traffic below.');
+
+      try {
+        await fetch('/api/reports/submit', {
+          method: 'POST',
+          body: formData
+        });
+      } catch(e) {}
+    }
+
+    // ==========================================
+    // GOOGLE MAPS PLATFORM GIS COMMAND ENGINE
+    // Source: Google Maps Platform Code Assist
+    // ==========================================
+    const REGION_COORDS = {
+      ALL: { center: [20.0, 30.0], zoom: 2 },
+      India: { center: [21.7679, 78.8718], zoom: 5 },
+      Brazil: { center: [-14.2350, -51.9253], zoom: 4 },
+      SouthAfrica: { center: [-30.5595, 22.9375], zoom: 5 },
+      Russia: { center: [61.5240, 105.3188], zoom: 3 },
+      China: { center: [35.8617, 104.1954], zoom: 4 }
+    };
+
+    const MUNICIPAL_CITY_COORDS = {
+      'bengaluru': [12.9716, 77.5946],
+      'bangalore': [12.9716, 77.5946],
+      'delhi': [28.6139, 77.2090],
+      'mumbai': [19.0760, 72.8777],
+      'chennai': [13.0827, 80.2707],
+      'hyderabad': [17.3850, 78.4867],
+      'kolkata': [22.5726, 88.3639],
+      'pune': [18.5204, 73.8567],
+      'são paulo': [-23.5505, -46.6333],
+      'sao paulo': [-23.5505, -46.6333],
+      'rio': [-22.9068, -43.1729],
+      'brasilia': [-15.7975, -47.8919],
+      'johannesburg': [-26.2041, 28.0473],
+      'cape town': [-33.9249, 18.4241],
+      'durban': [-29.8587, 31.0218],
+      'pretoria': [-25.7479, 28.2293],
+      'moscow': [55.7558, 37.6173],
+      'saint petersburg': [59.9343, 30.3351],
+      'kazan': [55.8304, 49.0661],
+      'beijing': [39.9042, 116.4074],
+      'shanghai': [31.2304, 121.4737],
+      'guangzhou': [23.1291, 113.2644],
+      'shenzhen': [22.5431, 114.0579]
+    };
+
+    async function initGisMap() {
+      const mapElem = document.getElementById('gis-map');
+      if (!mapElem) return;
+
+      if (gmpMap) {
+        updateGisMap();
+        return;
+      }
+
+      // Check localStorage or server endpoint for key
+      let key = localStorage.getItem('brics_gmp_key');
+      let mapId = 'DEMO_MAP_ID';
+
+      if (!key) {
+        try {
+          const confRes = await fetch('/api/maps/config');
+          const conf = await confRes.json();
+          if (conf.apiKey) {
+            key = conf.apiKey;
+          }
+          if (conf.mapId) {
+            mapId = conf.mapId;
+          }
+        } catch(e) {
+          console.warn("Could not fetch /api/maps/config:", e);
+        }
+      }
+
+      googleMapsApiKey = key || '';
+
+      // Attempt Google Maps Platform initialization
+      try {
+        if (googleMapsApiKey) {
+          const scriptTag = document.createElement('script');
+          scriptTag.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(googleMapsApiKey)}&v=weekly&libraries=marker,maps`;
+          scriptTag.async = true;
+          await new Promise((res, rej) => {
+            scriptTag.onload = res;
+            scriptTag.onerror = rej;
+            document.head.appendChild(scriptTag);
+          });
+        }
+
+        if (window.google && window.google.maps && window.google.maps.importLibrary) {
+          const { Map, InfoWindow } = await google.maps.importLibrary("maps");
+          await google.maps.importLibrary("marker");
+
+          mapElem.innerHTML = '';
+
+          const centerCoord = { lat: REGION_COORDS.ALL.center[0], lng: REGION_COORDS.ALL.center[1] };
+          gmpMap = new Map(mapElem, {
+            center: centerCoord,
+            zoom: REGION_COORDS.ALL.zoom,
+            mapId: mapId,
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+              style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+              position: google.maps.ControlPosition.TOP_RIGHT,
+            },
+            zoomControl: true,
+            streetViewControl: true,
+            fullscreenControl: true,
+            internalUsageAttributionIds: ['gmp_mcp_codeassist_v1_aistudio']
+          });
+
+          gmpInfoWindow = new InfoWindow();
+          isGoogleMapsLoaded = true;
+
+          const statusPill = document.getElementById('gmp-status-pill');
+          if (statusPill) {
+            statusPill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>GOOGLE MAPS PLATFORM • LIVE</span>`;
+            statusPill.className = "px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-bold tracking-wider flex items-center gap-1.5";
+          }
+
+          updateGisMap();
+          return;
+        }
+      } catch (err) {
+        console.warn("Google Maps Platform initialization notice; falling back to cartographic renderer:", err);
+      }
+
+      // Seamless Fallback
+      initLeafletFallback();
+    }
+
+    function initLeafletFallback() {
+      if (gisMap) return;
+      const mapElem = document.getElementById('gis-map');
+      if (!mapElem || typeof L === 'undefined') return;
+
+      try {
+        mapElem.innerHTML = '';
+        gisMap = L.map('gis-map', {
+          center: REGION_COORDS.ALL.center,
+          zoom: REGION_COORDS.ALL.zoom,
+          zoomControl: true,
+          attributionControl: false
+        });
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19,
+          subdomains: 'abcd',
+          opacity: 0.95
+        }).addTo(gisMap);
+
+        markerClusterGroup = L.markerClusterGroup({
+          showCoverageOnHover: false,
+          maxClusterRadius: 45,
+          iconCreateFunction: function(cluster) {
+            const markers = cluster.getAllChildMarkers();
+            let maxScore = 1;
+            markers.forEach(m => {
+              if (m.severityScore > maxScore) maxScore = m.severityScore;
+            });
+            let clusterBg = '#3b82f6';
+            if (maxScore === 5) clusterBg = '#ef4444';
+            else if (maxScore === 4) clusterBg = '#f97316';
+            else if (maxScore === 3) clusterBg = '#f59e0b';
+
+            return L.divIcon({
+              html: `<div style="background-color: ${clusterBg}; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-family: monospace; font-size: 13px; border: 2px solid #ffffff; box-shadow: 0 0 14px ${clusterBg}99;">${markers.length}</div>`,
+              className: 'gis-custom-cluster',
+              iconSize: [34, 34]
+            });
+          }
+        });
+        gisMap.addLayer(markerClusterGroup);
+
+        heatDensityLayer = L.layerGroup();
+
+        const statusPill = document.getElementById('gmp-status-pill');
+        if (statusPill) {
+          statusPill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span>GIS STANDBY • CONNECT GOOGLE MAPS</span>`;
+          statusPill.className = "px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-mono font-bold tracking-wider flex items-center gap-1.5 cursor-pointer";
+          statusPill.onclick = openGmpKeyModal;
+        }
+
+        setTimeout(() => {
+          gisMap.invalidateSize();
+        }, 300);
+
+        updateGisMap();
+      } catch (e) {
+        console.warn("Leaflet fallback notice:", e);
+      }
+    }
+
+    function openGmpKeyModal() {
+      const modal = document.getElementById('gmp-key-modal');
+      const input = document.getElementById('input-gmp-key');
+      if (input) {
+        input.value = localStorage.getItem('brics_gmp_key') || googleMapsApiKey || '';
+      }
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeGmpKeyModal() {
+      const modal = document.getElementById('gmp-key-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function saveGmpKey() {
+      const input = document.getElementById('input-gmp-key');
+      const keyVal = input ? input.value.trim() : '';
+      if (keyVal) {
+        localStorage.setItem('brics_gmp_key', keyVal);
+        googleMapsApiKey = keyVal;
+      }
+      closeGmpKeyModal();
+      if (gisMap) {
+        gisMap.remove();
+        gisMap = null;
+      }
+      gmpMap = null;
+      isGoogleMapsLoaded = false;
+      initGisMap();
+    }
+
+    function clearGmpKey() {
+      localStorage.removeItem('brics_gmp_key');
+      const input = document.getElementById('input-gmp-key');
+      if (input) input.value = '';
+      googleMapsApiKey = '';
+      closeGmpKeyModal();
+      if (gisMap) {
+        gisMap.remove();
+        gisMap = null;
+      }
+      gmpMap = null;
+      isGoogleMapsLoaded = false;
+      initGisMap();
+    }
+
+    function parseCoordsFromReport(rep) {
+      if (!rep) return null;
+      const locStr = (rep.location || '').toLowerCase();
+
+      // Check for explicit GPS [lat, lng] format
+      const gpsMatch = locStr.match(/gps\s*\[\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\]/);
+      if (gpsMatch) {
+        return [parseFloat(gpsMatch[1]), parseFloat(gpsMatch[2])];
+      }
+
+      // Check municipal cities
+      for (const [cityName, coords] of Object.entries(MUNICIPAL_CITY_COORDS)) {
+        if (locStr.includes(cityName)) {
+          const hash = rep.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          const jitterLat = ((hash % 100) - 50) * 0.0008;
+          const jitterLng = (((hash * 3) % 100) - 50) * 0.0008;
+          return [coords[0] + jitterLat, coords[1] + jitterLng];
+        }
+      }
+
+      // Fallback by country
+      const countryStr = (rep.country || '').toLowerCase();
+      let base = [20.5937, 78.9629]; // India default
+      if (countryStr.includes('brazil') || countryStr.includes('brasil')) base = [-23.5505, -46.6333];
+      else if (countryStr.includes('south africa') || countryStr.includes('africa')) base = [-26.2041, 28.0473];
+      else if (countryStr.includes('russia')) base = [55.7558, 37.6173];
+      else if (countryStr.includes('china')) base = [39.9042, 116.4074];
+
+      const hash = (rep.id || 'x').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const jitterLat = ((hash % 100) - 50) * 0.008;
+      const jitterLng = (((hash * 7) % 100) - 50) * 0.008;
+      return [base[0] + jitterLat, base[1] + jitterLng];
+    }
+
+    function updateGisMap() {
+      const activeCountElem = document.getElementById('map-active-count');
+
+      // Filter reports based on active inputs
+      const search = document.getElementById('filter-search')?.value.toLowerCase() || '';
+      const country = document.getElementById('filter-country')?.value || 'ALL';
+      const category = document.getElementById('filter-category')?.value || 'ALL';
+      const priority = document.getElementById('filter-priority')?.value || 'ALL';
+
+      const filtered = allReports.filter(r => {
+        if (country !== 'ALL' && !r.country.toLowerCase().includes(country.toLowerCase())) return false;
+        if (category !== 'ALL' && r.finalCategory !== category && r.problemDomain !== category) return false;
+        if (priority !== 'ALL' && String(r.hazardPriorityScore) !== priority) return false;
+        if (search) {
+          const matchStr = `${r.referenceId} ${r.citizenName} ${r.location} ${r.summary} ${r.transcription} ${r.englishTranslation} ${r.problemDomain || ''}`.toLowerCase();
+          if (!matchStr.includes(search)) return false;
+        }
+        return true;
+      });
+
+      if (activeCountElem) {
+        activeCountElem.textContent = `${filtered.length} Plotted`;
+      }
+
+      if (isGoogleMapsLoaded && gmpMap && window.google && window.google.maps) {
+        updateGoogleMapsReports(filtered);
+      } else if (gisMap && markerClusterGroup) {
+        updateLeafletReports(filtered);
+      }
+    }
+
+    function updateGoogleMapsReports(reports) {
+      gmpMarkers.forEach(m => {
+        if (m.marker) {
+          if (m.marker.map !== undefined) m.marker.map = null;
+          else if (m.marker.setMap) m.marker.setMap(null);
+        }
+      });
+      gmpMarkers = [];
+
+      gmpCircles.forEach(c => c.setMap(null));
+      gmpCircles = [];
+
+      reports.forEach(rep => {
+        const coords = parseCoordsFromReport(rep);
+        if (!coords) return;
+        const lat = coords[0];
+        const lng = coords[1];
+
+        const score = rep.hazardPriorityScore || 1;
+        let markerColor = '#10b981'; // Priority 1-2: Green
+        if (score >= 4) markerColor = '#ef4444'; // Priority 4-5: Red
+        else if (score === 3) markerColor = '#f59e0b'; // Priority 3: Yellow
+
+        // AdvancedMarkerElement DOM content
+        const pinContainer = document.createElement("div");
+        pinContainer.className = "gmp-problem-marker";
+        pinContainer.style.position = "relative";
+        pinContainer.style.cursor = "pointer";
+        pinContainer.innerHTML = `
+          <div style="position: relative; width: 26px; height: 26px;">
+            ${score === 5 ? `<div class="gis-beacon-ping" style="width: 38px; height: 38px; border: 2px solid #ef4444; background: rgba(239, 68, 68, 0.35); top: -6px; left: -6px;"></div>` : ''}
+            <div style="position: relative; width: 26px; height: 26px; background-color: ${markerColor}; border: 2.5px solid #ffffff; border-radius: 50%; box-shadow: 0 0 12px ${markerColor}; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #ffffff; font-family: monospace;">
+              ${score}
+            </div>
+          </div>
+        `;
+
+        let marker;
+        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+          marker = new google.maps.marker.AdvancedMarkerElement({
+            map: gmpMap,
+            position: { lat, lng },
+            title: `[Priority ${score}/5] ${rep.problemDomain || rep.finalCategory} - ${rep.location}`,
+            content: pinContainer,
+            gmpClickable: true,
+          });
+        } else {
+          marker = new google.maps.Marker({
+            map: gmpMap,
+            position: { lat, lng },
+            title: `[Priority ${score}/5] ${rep.problemDomain || rep.finalCategory} - ${rep.location}`
+          });
+        }
+
+        const isDispatched = rep.status === 'Dispatched' || rep.status === 'In Progress' || rep.status === 'Resolved';
+        const dispatchBtnHtml = isDispatched 
+          ? `<span class="px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold">✓ Crew Dispatched (${rep.status})</span>`
+          : `<button onclick="dispatchFromMap('${rep.id}')" class="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold font-mono text-[11px] shadow-md shadow-red-500/30 transition flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-truck-fast text-[10px]"></i>
+              <span>Dispatch Crew Now</span>
+             </button>`;
+
+        const popupContent = `
+          <div class="p-1 max-w-[290px] font-sans">
+            <div class="flex items-center justify-between border-b border-slate-700/80 pb-2 mb-2">
+              <span class="font-mono text-xs font-bold text-white">${rep.referenceId}</span>
+              <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold" style="background-color: ${markerColor}22; color: ${markerColor}; border: 1px solid ${markerColor}55;">
+                PRIORITY ${score}/5
+              </span>
+            </div>
+            <div class="space-y-1 text-xs">
+              <div class="font-bold text-white text-sm flex items-center gap-1.5">
+                <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+                <span>${rep.problemDomain || rep.finalCategory}</span>
+              </div>
+              <div class="text-slate-300 text-[11px] flex items-center gap-1">
+                <i class="fa-solid fa-location-dot text-red-400"></i>
+                <span class="font-medium">${rep.location}</span>
+              </div>
+              <p class="text-slate-200 text-xs bg-slate-950/90 p-2.5 rounded-lg border border-slate-800 leading-relaxed max-h-24 overflow-y-auto mt-1 italic">
+                "${rep.summary || rep.transcription || rep.typedComplaint || 'Civic infrastructure hazard reported.'}"
+              </p>
+              <div class="text-[10px] text-slate-400 flex items-center justify-between pt-1 font-mono">
+                <span>Citizen: <strong class="text-white">${rep.citizenName}</strong></span>
+                <span>${rep.country}</span>
+              </div>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-slate-800 flex items-center justify-between gap-2">
+              ${dispatchBtnHtml}
+              <button onclick="openDetailModal('${rep.id}')" class="text-blue-400 hover:text-blue-300 text-[11px] font-mono underline cursor-pointer" title="Examine full dossier">
+                Dossier →
+              </button>
+            </div>
+          </div>
+        `;
+
+        marker.addListener('click', () => {
+          if (gmpInfoWindow) {
+            gmpInfoWindow.setContent(popupContent);
+            gmpInfoWindow.open({
+              anchor: marker,
+              map: gmpMap
+            });
+          }
+        });
+
+        gmpMarkers.push({
+          reportId: rep.id,
+          marker: marker,
+          popupHtml: popupContent,
+          lat,
+          lng
+        });
+
+        if (showHeatDensity) {
+          const radiusMeters = score === 5 ? 140000 : score === 4 ? 90000 : 50000;
+          const circle = new google.maps.Circle({
+            strokeColor: markerColor,
+            strokeOpacity: 0.6,
+            strokeWeight: 1,
+            fillColor: markerColor,
+            fillOpacity: 0.15,
+            map: gmpMap,
+            center: { lat, lng },
+            radius: radiusMeters
+          });
+          gmpCircles.push(circle);
+        }
+      });
+    }
+
+    function updateLeafletReports(reports) {
+      if (!markerClusterGroup) return;
+      markerClusterGroup.clearLayers();
+      if (heatDensityLayer) heatDensityLayer.clearLayers();
+
+      reports.forEach(rep => {
+        const coords = parseCoordsFromReport(rep);
+        if (!coords) return;
+
+        const score = rep.hazardPriorityScore || 1;
+        let markerColor = '#10b981'; // Priority 1-2: Green
+        let beaconPing = '';
+
+        if (score >= 4) {
+          markerColor = '#ef4444'; // Priority 4-5: Red
+          beaconPing = `<div class="gis-beacon-ping" style="width: 32px; height: 32px; border: 2px solid #ef4444; background: rgba(239, 68, 68, 0.4); top: -6px; left: -6px;"></div>`;
+        } else if (score === 3) {
+          markerColor = '#f59e0b'; // Priority 3: Yellow
+        }
+
+        const markerHtml = `
+          <div style="position: relative; width: 22px; height: 22px;">
+            ${beaconPing}
+            <div style="position: relative; width: 22px; height: 22px; background-color: ${markerColor}; border: 2.5px solid #ffffff; border-radius: 50%; box-shadow: 0 0 10px ${markerColor}; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #fff;">
+              ${score}
+            </div>
+          </div>
+        `;
+
+        const icon = L.divIcon({
+          html: markerHtml,
+          className: 'gis-custom-pin',
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        });
+
+        const marker = L.marker(coords, { icon });
+        marker.severityScore = score;
+
+        const isDispatched = rep.status === 'Dispatched' || rep.status === 'In Progress' || rep.status === 'Resolved';
+        const dispatchBtnHtml = isDispatched 
+          ? `<span class="px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold">✓ Crew Dispatched (${rep.status})</span>`
+          : `<button onclick="dispatchFromMap('${rep.id}')" class="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold font-mono text-[11px] shadow-md shadow-red-500/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-truck-fast text-[10px]"></i>
+              <span>Dispatch Crew Now</span>
+             </button>`;
+
+        const popupContent = `
+          <div class="p-1 max-w-[280px]">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+              <span class="font-mono text-[11px] font-bold text-white">${rep.referenceId}</span>
+              <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold" style="background-color: ${markerColor}22; color: ${markerColor}; border: 1px solid ${markerColor}55;">
+                PRIORITY ${score}/5
+              </span>
+            </div>
+            <div class="space-y-1 text-xs">
+              <div class="font-bold text-white">${rep.problemDomain || rep.finalCategory}</div>
+              <div class="text-slate-400 text-[11px]"><i class="fa-solid fa-location-dot text-red-400 mr-1"></i> ${rep.location}</div>
+              <p class="text-slate-300 text-[11px] bg-slate-900/90 p-2 rounded border border-slate-800 line-clamp-3 mt-1.5">
+                ${rep.summary || rep.transcription || rep.typedComplaint || 'Civic infrastructure anomaly logged.'}
+              </p>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
+              ${dispatchBtnHtml}
+              <button onclick="openDetailModal('${rep.id}')" class="text-slate-400 hover:text-white text-[11px] font-mono underline" title="Examine full dossier">
+                Dossier →
+              </button>
+            </div>
+          </div>
+        `;
+
+        marker.bindPopup(popupContent);
+        markerClusterGroup.addLayer(marker);
+
+        if (heatDensityLayer && showHeatDensity) {
+          const radiusMeters = score === 5 ? 120000 : score === 4 ? 80000 : 45000;
+          const heatCircle = L.circle(coords, {
+            radius: radiusMeters,
+            fillColor: markerColor,
+            fillOpacity: 0.12,
+            stroke: false
+          });
+          heatDensityLayer.addLayer(heatCircle);
+        }
+      });
+    }
+
+    function zoomToRegion(regionKey) {
+      currentMapRegion = regionKey;
+
+      ['ALL', 'India', 'Brazil', 'SouthAfrica', 'Russia', 'China'].forEach(k => {
+        const btn = document.getElementById(`map-btn-${k}`);
+        if (btn) {
+          if (k === regionKey) {
+            btn.className = "px-3 py-1.5 rounded-lg bg-red-600 text-white font-bold transition shadow-sm";
+          } else {
+            btn.className = "px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition";
+          }
+        }
+      });
+
+      const conf = REGION_COORDS[regionKey] || REGION_COORDS.ALL;
+      if (isGoogleMapsLoaded && gmpMap) {
+        gmpMap.panTo({ lat: conf.center[0], lng: conf.center[1] });
+        gmpMap.setZoom(conf.zoom);
+      } else if (gisMap && typeof L !== 'undefined') {
+        gisMap.flyTo(conf.center, conf.zoom, { duration: 1.2 });
+      }
+    }
+
+    function toggleHeatmapDensity() {
+      showHeatDensity = !showHeatDensity;
+      const label = document.getElementById('heat-label');
+      const btn = document.getElementById('btn-toggle-heat');
+
+      if (showHeatDensity) {
+        label.textContent = "Density: ON";
+        btn.classList.add('bg-amber-600', 'text-white', 'border-amber-500');
+        btn.classList.remove('bg-slate-800', 'text-slate-300');
+      } else {
+        label.textContent = "Density: OFF";
+        btn.classList.remove('bg-amber-600', 'text-white', 'border-amber-500');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+      }
+
+      updateGisMap();
+    }
+
+    function locateOnMap(reportId) {
+      const rep = allReports.find(r => r.id === reportId);
+      if (!rep) return;
+      const coords = parseCoordsFromReport(rep);
+      if (!coords) return;
+
+      const mapCard = document.getElementById('gis-map');
+      if (mapCard) {
+        mapCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      if (isGoogleMapsLoaded && gmpMap && window.google && window.google.maps) {
+        gmpMap.panTo({ lat: coords[0], lng: coords[1] });
+        gmpMap.setZoom(14);
+
+        const markerObj = gmpMarkers.find(m => m.reportId === reportId);
+        if (markerObj && markerObj.marker) {
+          if (gmpInfoWindow) {
+            gmpInfoWindow.setContent(markerObj.popupHtml);
+            gmpInfoWindow.open({
+              anchor: markerObj.marker,
+              map: gmpMap
+            });
+          }
+        }
+      } else if (gisMap && typeof L !== 'undefined') {
+        gisMap.flyTo(coords, 14, { duration: 1 });
+      }
+    }
+
+    function locateFromModal() {
+      if (!activeSelectedReport) return;
+      const repId = activeSelectedReport.id;
+      closeDetailModal();
+      setTimeout(() => {
+        locateOnMap(repId);
+      }, 200);
+    }
+
+    async function dispatchFromMap(reportId) {
+      const rep = allReports.find(r => r.id === reportId);
+      if (!rep) return;
+
+      try {
+        const res = await fetch(`/api/reports/${reportId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'Dispatched',
+            note: `Emergency municipal crew dispatched directly via Google Maps GIS Command Center. Priority: ${rep.hazardPriorityScore}/5.`,
+            officer: "GIS Command Dispatcher"
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          rep.status = 'Dispatched';
+          updateKPIs();
+          applyFilters();
+          updateGisMap();
+        }
+      } catch(err) {
+        console.error("GIS dispatch error:", err);
+      }
+    }
+  </script>
+</body>
+</html>
