@@ -2287,11 +2287,14 @@ app.post("/api/admin/login", (req: Request, res: Response) => {
 // API ROUTE 6.5: Google Maps Platform Configuration (/api/maps/config)
 // -------------------------------------------------------------
 app.get("/api/maps/config", (req: Request, res: Response) => {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY || "";
+  const rawKey = (process.env.GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();
+  const rawMapId = (process.env.GOOGLE_MAPS_MAP_ID || "").trim();
+  const isValidKey = rawKey.startsWith("AIza") && rawKey.length >= 30;
+  const validMapId = rawMapId && rawMapId !== "DEMO_MAP_ID" ? rawMapId : "";
   return res.json({
-    hasKey: !!apiKey,
-    apiKey: apiKey,
-    mapId: process.env.GOOGLE_MAPS_MAP_ID || "DEMO_MAP_ID",
+    hasKey: isValidKey,
+    apiKey: isValidKey ? rawKey : "",
+    mapId: validMapId,
   });
 });
 

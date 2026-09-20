@@ -9,12 +9,34 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Maps Platform Dynamic Bootstrap Loader (Source: Google Maps Platform Code Assist) -->
+  <!-- Google Maps Platform Global Error Interceptor & Resilient Loader -->
   <script>
-    // prettier-ignore
-    (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
-      v: "weekly"
-    });
+    // Global Google Maps Authentication & Project Error Interceptor (Catches ApiProjectMapError)
+    window.gm_authFailure = function() {
+      console.warn("[CYPHER GIS] Google Maps Platform authorization notice (ApiProjectMapError): Active key lacks Maps JavaScript API activation or project billing. Seamlessly switching to High-Precision Sovereign Cartographic Engine.");
+      window.__gmpAuthFailed = true;
+      if (typeof isGoogleMapsLoaded !== 'undefined') {
+        isGoogleMapsLoaded = false;
+      }
+      if (typeof gmpMap !== 'undefined') {
+        gmpMap = null;
+      }
+      const mapElem = document.getElementById('gis-map');
+      if (mapElem) {
+        mapElem.innerHTML = '';
+      }
+      if (typeof initLeafletFallback === 'function') {
+        initLeafletFallback();
+      }
+      const statusPill = document.getElementById('gmp-status-pill');
+      if (statusPill) {
+        statusPill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span>SOVEREIGN GIS • ACTIVE</span>`;
+        statusPill.className = "px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-mono font-bold tracking-wider flex items-center gap-1.5 cursor-pointer";
+        if (typeof openGmpKeyModal === 'function') {
+          statusPill.onclick = openGmpKeyModal;
+        }
+      }
+    };
   </script>
   <!-- Fallback GIS Libraries -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -1214,9 +1236,45 @@
       'shenzhen': [22.5431, 114.0579]
     };
 
+    function loadGoogleMapsSdk(apiKey) {
+      if (window.google && window.google.maps && window.google.maps.importLibrary) {
+        return Promise.resolve();
+      }
+      return new Promise((resolve, reject) => {
+        const existingScript = document.getElementById('gmp-script-tag');
+        if (existingScript) {
+          if (window.google && window.google.maps) {
+            resolve();
+          } else {
+            existingScript.addEventListener('load', resolve);
+            existingScript.addEventListener('error', reject);
+          }
+          return;
+        }
+
+        // Standard Dynamic Bootstrap Loader with valid key
+        // prettier-ignore
+        (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));a.id="gmp-script-tag";e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+          key: apiKey,
+          v: "weekly"
+        });
+
+        if (window.google && window.google.maps && window.google.maps.importLibrary) {
+          window.google.maps.importLibrary("maps").then(resolve).catch(reject);
+        } else {
+          resolve();
+        }
+      });
+    }
+
     async function initGisMap() {
       const mapElem = document.getElementById('gis-map');
       if (!mapElem) return;
+
+      if (window.__gmpAuthFailed) {
+        initLeafletFallback();
+        return;
+      }
 
       if (gmpMap) {
         updateGisMap();
@@ -1224,8 +1282,8 @@
       }
 
       // Check localStorage or server endpoint for key
-      let key = localStorage.getItem('brics_gmp_key');
-      let mapId = 'DEMO_MAP_ID';
+      let key = localStorage.getItem('brics_gmp_key') || '';
+      let mapId = '';
 
       if (!key) {
         try {
@@ -1242,20 +1300,24 @@
         }
       }
 
-      googleMapsApiKey = key || '';
+      googleMapsApiKey = (key || '').trim();
 
-      // Attempt Google Maps Platform initialization
+      // Guard: Only initialize Google Maps if a properly formatted Google API key is available
+      const isValidKey = Boolean(
+        googleMapsApiKey &&
+        googleMapsApiKey.startsWith('AIza') &&
+        googleMapsApiKey.length >= 30
+      );
+
+      if (!isValidKey) {
+        // High-precision sovereign Leaflet fallback without invalid external calls
+        initLeafletFallback();
+        return;
+      }
+
+      // Attempt Google Maps Platform initialization with valid key
       try {
-        if (googleMapsApiKey) {
-          const scriptTag = document.createElement('script');
-          scriptTag.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(googleMapsApiKey)}&v=weekly&libraries=marker,maps`;
-          scriptTag.async = true;
-          await new Promise((res, rej) => {
-            scriptTag.onload = res;
-            scriptTag.onerror = rej;
-            document.head.appendChild(scriptTag);
-          });
-        }
+        await loadGoogleMapsSdk(googleMapsApiKey);
 
         if (window.google && window.google.maps && window.google.maps.importLibrary) {
           const { Map, InfoWindow } = await google.maps.importLibrary("maps");
@@ -1264,10 +1326,9 @@
           mapElem.innerHTML = '';
 
           const centerCoord = { lat: REGION_COORDS.ALL.center[0], lng: REGION_COORDS.ALL.center[1] };
-          gmpMap = new Map(mapElem, {
+          const mapConfig = {
             center: centerCoord,
             zoom: REGION_COORDS.ALL.zoom,
-            mapId: mapId,
             mapTypeControl: true,
             mapTypeControlOptions: {
               style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
@@ -1277,7 +1338,13 @@
             streetViewControl: true,
             fullscreenControl: true,
             internalUsageAttributionIds: ['gmp_mcp_codeassist_v1_aistudio']
-          });
+          };
+
+          if (mapId && mapId !== 'DEMO_MAP_ID' && mapId.trim() !== '') {
+            mapConfig.mapId = mapId;
+          }
+
+          gmpMap = new Map(mapElem, mapConfig);
 
           gmpInfoWindow = new InfoWindow();
           isGoogleMapsLoaded = true;
@@ -1285,7 +1352,8 @@
           const statusPill = document.getElementById('gmp-status-pill');
           if (statusPill) {
             statusPill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>GOOGLE MAPS PLATFORM • LIVE</span>`;
-            statusPill.className = "px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-bold tracking-wider flex items-center gap-1.5";
+            statusPill.className = "px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-bold tracking-wider flex items-center gap-1.5 cursor-pointer";
+            statusPill.onclick = openGmpKeyModal;
           }
 
           updateGisMap();
@@ -1378,11 +1446,17 @@
     function saveGmpKey() {
       const input = document.getElementById('input-gmp-key');
       const keyVal = input ? input.value.trim() : '';
+      window.__gmpAuthFailed = false;
       if (keyVal) {
         localStorage.setItem('brics_gmp_key', keyVal);
         googleMapsApiKey = keyVal;
       }
       closeGmpKeyModal();
+      // Remove any existing script tag so fresh loader can bind
+      const existingScript = document.getElementById('gmp-script-tag');
+      if (existingScript) {
+        existingScript.remove();
+      }
       if (gisMap) {
         gisMap.remove();
         gisMap = null;
@@ -1394,10 +1468,15 @@
 
     function clearGmpKey() {
       localStorage.removeItem('brics_gmp_key');
+      window.__gmpAuthFailed = false;
       const input = document.getElementById('input-gmp-key');
       if (input) input.value = '';
       googleMapsApiKey = '';
       closeGmpKeyModal();
+      const existingScript = document.getElementById('gmp-script-tag');
+      if (existingScript) {
+        existingScript.remove();
+      }
       if (gisMap) {
         gisMap.remove();
         gisMap = null;
