@@ -15,6 +15,14 @@ export interface CorroboratedSignal {
   transcript: string;
 }
 
+export interface FieldConfidences {
+  hazard_category: number;
+  summary: number;
+  criticality: number;
+  location: number;
+  crew_recommendation: number;
+}
+
 export interface IncidentDossier {
   hazard_category: HazardCategory;
   normalized_summary: string;
@@ -22,6 +30,8 @@ export interface IncidentDossier {
   criticality_level: 1 | 2 | 3 | 4 | 5;
   contradiction_detected: boolean;
   contradiction_reason: string;
+  photoContradictsReport?: boolean;
+  contradictionExplanation?: string;
   recommended_crew: string;
   required_equipment: string[];
   hitl_required: boolean;
@@ -29,6 +39,12 @@ export interface IncidentDossier {
   hitl_authorized?: boolean;
   hitl_authorized_by?: string;
   hitl_authorized_at?: string;
+  hitl_override_reason?: string;
+  operator_id?: string;
+  confidence_score?: number;
+  field_confidences?: FieldConfidences;
+  departmentRouted?: string;
+  isDegraded?: boolean;
 }
 
 export interface CivicIncident extends IncidentDossier {
@@ -36,6 +52,7 @@ export interface CivicIncident extends IncidentDossier {
   ticketId: string;
   referenceId: string;
   timestamp: string;
+  createdAt: number;
   citizenName: string;
   verifiedPhone: string;
   country: string;
@@ -46,7 +63,7 @@ export interface CivicIncident extends IncidentDossier {
   typedComplaint: string;
   transcription: string;
   englishTranslation: string;
-  status: "OPEN" | "DISPATCHED" | "IN_PROGRESS" | "RESOLVED";
+  status: "AWAITING_VALIDATION" | "OPEN" | "DISPATCHED" | "IN_PROGRESS" | "RESOLVED";
   duplicateCount: number;
   corroboratedReports: number;
   corroborationDetails?: CorroboratedSignal[];
@@ -54,6 +71,13 @@ export interface CivicIncident extends IncidentDossier {
   postRepairPhotoUrl?: string;
   estimatedRepairCostUSD?: number;
   recommendedCrewSize?: number;
+  assignedUnit?: string;
+  slaMet?: string;
+  slaTargetMinutes?: number;
+  corroborationSummary?: string;
+  sector?: "Center" | "North" | "East" | "South" | "West";
+  vectorSimilarity?: number;
+  haversineDistanceM?: number;
 }
 
 export interface TelemetryState {
@@ -72,3 +96,7 @@ export interface TestScenarioPreset {
   description: string;
   incident: Partial<CivicIncident>;
 }
+
+export type ThemeMode = 'dark' | 'light';
+
+export type AppView = 'console' | 'report' | 'track' | 'admin';

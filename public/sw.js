@@ -1,8 +1,10 @@
-// CYPHER PWA Service Worker
-const CACHE_NAME = 'cypher-cache-v1';
+// CYPHER PWA Service Worker with IndexedDB Offline Sync Queue
+const CACHE_NAME = 'cypher-cache-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/console.html',
+  '/console',
   '/verify-phone',
   '/verify-phone.html',
   '/verify-id',
@@ -18,10 +20,52 @@ const STATIC_ASSETS = [
   '/icon.svg'
 ];
 
+const IDB_NAME = 'cypher-offline-db';
+const IDB_STORE = 'pending-reports';
+
+function openOfflineDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(IDB_NAME, 1);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function getPendingOfflineReports() {
+  try {
+    const db = await openOfflineDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const store = tx.objectStore(IDB_STORE);
+      const req = store.getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => resolve([]);
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function removeOfflineReport(id) {
+  try {
+    const db = await openOfflineDB();
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(id);
+  } catch (e) {
+    console.warn('[SW-IDB] Error removing report:', e);
+  }
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ServiceWorker] Pre-caching offline shell');
+      console.log('[ServiceWorker] Pre-caching offline shell & GIS console');
       return cache.addAll(STATIC_ASSETS).catch((err) => {
         console.warn('[ServiceWorker] Cache addAll notice:', err);
       });
@@ -47,12 +91,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Do not cache API requests or Socket.io traffic in the SW cache (they are handled via IndexedDB queue)
+  // Network First, fallback to cache for HTML and assets
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io/')) {
     return;
   }
 
-  // Network First, fallback to cache for HTML and assets
   event.respondWith(
     fetch(event.request)
       .then((response) => {
@@ -68,24 +111,39 @@ self.addEventListener('fetch', (event) => {
         const cached = await caches.match(event.request);
         if (cached) return cached;
 
-        // If navigation request fails offline, fallback to report or index
         if (event.request.mode === 'navigate') {
-          return (await caches.match('/report')) || (await caches.match('/report.html')) || (await caches.match('/index.html'));
+          return (await caches.match('/console.html')) || (await caches.match('/report')) || (await caches.match('/index.html'));
         }
         return new Response('Offline: Content currently not cached', { status: 503, statusText: 'Offline' });
       })
   );
 });
 
-// Background sync support
+// Background sync support with automatic replay to /api/reports
 self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-offline-reports') {
     event.waitUntil(
-      self.clients.matchAll().then((clients) => {
+      (async () => {
+        const reports = await getPendingOfflineReports();
+        for (const item of reports) {
+          try {
+            const res = await fetch('/api/reports', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(item.payload)
+            });
+            if (res.ok) {
+              await removeOfflineReport(item.id);
+            }
+          } catch (err) {
+            console.warn('[SW-IDB] Failed sync attempt:', err);
+          }
+        }
+        const clients = await self.clients.matchAll();
         clients.forEach((client) => {
-          client.postMessage({ type: 'TRIGGER_OFFLINE_SYNC' });
+          client.postMessage({ type: 'TRIGGER_OFFLINE_SYNC_COMPLETE' });
         });
-      })
+      })()
     );
   }
 });

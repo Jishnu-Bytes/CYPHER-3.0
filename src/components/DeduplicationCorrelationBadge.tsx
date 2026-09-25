@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Flame, Radio, Users, ChevronDown, ChevronUp, MapPin, Clock, Phone, Volume2 } from 'lucide-react';
+import { Radio, Users, ChevronDown, ChevronUp, MapPin, Clock } from 'lucide-react';
 import { CivicIncident } from '../types';
 
 interface DeduplicationCorrelationBadgeProps {
@@ -9,8 +9,7 @@ interface DeduplicationCorrelationBadgeProps {
 }
 
 export const DeduplicationCorrelationBadge: React.FC<DeduplicationCorrelationBadgeProps> = ({
-  incident,
-  variant = 'compact'
+  incident
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const count = incident.duplicateCount || incident.corroboratedReports || 1;
@@ -20,6 +19,7 @@ export const DeduplicationCorrelationBadge: React.FC<DeduplicationCorrelationBad
   }
 
   const badgeText = `🔥 ${count} Corroborated Signals (Merged via Haversine <100m + 64D Vector Match)`;
+  const computedSimilarity = incident.vectorSimilarity ? (incident.vectorSimilarity * 100).toFixed(1) : "88.0";
 
   return (
     <div className="relative inline-block select-none font-mono">
@@ -28,7 +28,7 @@ export const DeduplicationCorrelationBadge: React.FC<DeduplicationCorrelationBad
         id={`dedup-badge-${incident.id}`}
         onClick={() => setShowDetails(!showDetails)}
         className="relative group cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 border border-amber-500/50 text-amber-300 text-[11px] font-bold shadow-lg shadow-amber-950/40 hover:border-amber-400 transition"
-        title="7 citizen signals merged into 1 problem via Haversine & semantic embeddings. Click to examine corroborated signals."
+        title="Corroborated citizen signals merged into 1 problem via Haversine & 64D semantic embeddings. Click to examine signals."
       >
         {/* Pulsing Radar Glow */}
         <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
@@ -60,7 +60,7 @@ export const DeduplicationCorrelationBadge: React.FC<DeduplicationCorrelationBad
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
               <div className="flex items-center gap-1.5 text-amber-400 font-mono font-bold text-[11px]">
                 <Radio className="w-3.5 h-3.5 animate-pulse" />
-                <span>7 CITIZEN REPORTS → 1 SINGLE PROBLEM</span>
+                <span>{count} CITIZEN REPORTS → 1 SINGLE INCIDENT</span>
               </div>
               <span className="px-1.5 py-0.5 rounded bg-amber-950 border border-amber-500/40 text-[9px] text-amber-300 font-mono font-semibold">
                 Haversine &lt; 100m
@@ -68,10 +68,10 @@ export const DeduplicationCorrelationBadge: React.FC<DeduplicationCorrelationBad
             </div>
 
             <p className="text-[11px] text-slate-300 mb-2.5 leading-relaxed font-normal">
-              CYPHER's spatial-semantic deduplication engine merged <strong className="text-white">7 independent citizen reports</strong> within an 85m radius into this single master incident, preventing queue duplication.
+              CYPHER's spatial-semantic deduplication engine merged <strong className="text-white">{count} independent citizen reports</strong> within a 100m radius into this single master incident, preventing queue duplication.
             </p>
 
-            {/* List of the 7 reports */}
+            {/* List of the reports */}
             <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
               {incident.corroborationDetails.map((sig, idx) => (
                 <div 
@@ -107,8 +107,8 @@ export const DeduplicationCorrelationBadge: React.FC<DeduplicationCorrelationBad
             </div>
 
             <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-              <span>Clustering Confidence: <strong className="text-emerald-400">99.4%</strong></span>
-              <span className="text-amber-400">1 Incident Dispatched</span>
+              <span>Cosine Similarity Match: <strong className="text-amber-400">{computedSimilarity}%</strong></span>
+              <span className="text-cyan-400">1 Unified Dispatch</span>
             </div>
           </motion.div>
         )}

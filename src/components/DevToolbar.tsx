@@ -1,8 +1,6 @@
 import React from 'react';
-import { motion } from 'motion/react';
-import { Sliders, Zap, Flame, AlertOctagon, Terminal, RefreshCw, Layers } from 'lucide-react';
+import { Terminal, ShieldAlert, Flame, Zap, RefreshCw } from 'lucide-react';
 import { TEST_PRESETS } from '../data/presets';
-import { CivicIncident } from '../types';
 
 interface DevToolbarProps {
   activePresetId: string;
@@ -16,33 +14,26 @@ export const DevToolbar: React.FC<DevToolbarProps> = ({
   onReset
 }) => {
   return (
-    <div id="quick-load-dev-toolbar" className="w-full bg-slate-950/90 border-b border-cyan-500/30 px-3 py-2 text-xs font-mono text-slate-300">
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+    <div id="quick-load-dev-toolbar" className="w-full bg-[#030712] border-b border-cyan-500/20 px-3 sm:px-6 py-2 text-xs font-mono text-slate-300">
+      <div className="w-full max-w-[1720px] mx-auto flex flex-wrap items-center justify-between gap-2">
         {/* Left Branding */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-cyan-950/90 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold">
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 text-[10px] font-bold">
             <Terminal className="w-3 h-3 text-cyan-400" />
-            <span>DEV TOOLBAR • QUICK-LOAD PRESETS</span>
+            <span>OPERATIONAL SCENARIO PRESETS</span>
           </div>
-          <span className="text-slate-500 hidden sm:inline text-[11px]">| Instant Test States</span>
+          <span className="text-slate-500 hidden md:inline text-[11px]">| Real-Time Triage Simulation</span>
         </div>
 
-        {/* 3 Preset Trigger Buttons */}
+        {/* 3 Required Quick-Test Buttons: [Preset A: L5 Hazard], [Preset B: 7-Signal Cluster], [Preset C: Contradiction] */}
         <div className="flex flex-wrap items-center gap-2">
           {TEST_PRESETS.map(preset => {
             const isActive = activePresetId === preset.id;
-            let accentColor = "cyan";
-            let Icon = Zap;
-
-            if (preset.id === 'preset-1') {
-              accentColor = "red";
-              Icon = Zap;
-            } else if (preset.id === 'preset-2') {
-              accentColor = "amber";
-              Icon = Flame;
-            } else if (preset.id === 'preset-3') {
-              accentColor = "purple";
-              Icon = AlertOctagon;
+            let icon = <ShieldAlert className="w-3.5 h-3.5" />;
+            if (preset.id === 'preset-b') {
+              icon = <Flame className="w-3.5 h-3.5 text-amber-400" />;
+            } else if (preset.id === 'preset-c') {
+              icon = <Zap className="w-3.5 h-3.5 text-purple-400" />;
             }
 
             return (
@@ -50,23 +41,21 @@ export const DevToolbar: React.FC<DevToolbarProps> = ({
                 key={preset.id}
                 id={`btn-${preset.id}`}
                 onClick={() => onSelectPreset(preset.id)}
-                className={`relative px-3 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm ${
                   isActive
-                    ? preset.id === 'preset-1'
-                      ? 'bg-red-600 text-white shadow-red-900/60 border border-red-400 ring-1 ring-red-400'
-                      : preset.id === 'preset-2'
-                        ? 'bg-amber-600 text-slate-950 shadow-amber-900/60 border border-amber-300 ring-1 ring-amber-300 font-extrabold'
-                        : 'bg-purple-600 text-white shadow-purple-900/60 border border-purple-400 ring-1 ring-purple-400'
-                    : 'bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700/80 hover:border-slate-600'
+                    ? preset.id === 'preset-a'
+                      ? 'bg-red-600 text-white shadow-red-950 border border-red-400'
+                      : preset.id === 'preset-b'
+                      ? 'bg-amber-600 text-slate-950 font-black shadow-amber-950 border border-amber-300'
+                      : 'bg-purple-600 text-white shadow-purple-950 border border-purple-400'
+                    : 'bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700/80'
                 }`}
                 title={preset.description}
               >
-                <Icon className={`w-3.5 h-3.5 ${
-                  isActive ? (preset.id === 'preset-2' ? 'text-slate-950' : 'text-white') : 'text-slate-400'
-                }`} />
+                {icon}
                 <span>[{preset.label}]</span>
                 {isActive && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping ml-1" />
                 )}
               </button>
             );
@@ -75,8 +64,8 @@ export const DevToolbar: React.FC<DevToolbarProps> = ({
           <button
             id="btn-reset-scenarios"
             onClick={onReset}
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition"
-            title="Reset All Incidents"
+            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition cursor-pointer"
+            title="Reset All Preset Scenarios"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
@@ -85,3 +74,4 @@ export const DevToolbar: React.FC<DevToolbarProps> = ({
     </div>
   );
 };
+export default DevToolbar;
