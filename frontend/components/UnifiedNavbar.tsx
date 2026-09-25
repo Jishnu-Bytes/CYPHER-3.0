@@ -11,6 +11,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { AppView, ThemeMode } from '../types';
+import { SyncStatusIndicator } from './SyncStatusIndicator';
 
 interface UnifiedNavbarProps {
   activeView: AppView;
@@ -132,15 +133,8 @@ export const UnifiedNavbar: React.FC<UnifiedNavbarProps> = ({
         </div>
 
         {/* Live Telemetry & Theme Switcher */}
-        <div className="hidden lg:flex items-center gap-2.5 text-xs font-mono">
-          <div className={`px-2.5 py-1 rounded-full border flex items-center gap-1.5 text-[11px] ${
-            isDark 
-              ? 'bg-slate-900/90 border-emerald-500/40 text-emerald-300' 
-              : 'bg-emerald-50 border-emerald-300 text-emerald-800'
-          }`}>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="font-semibold">Sub-50ms</span>
-          </div>
+        <div className="hidden lg:flex items-center gap-2 text-xs font-mono">
+          <SyncStatusIndicator themeMode={themeMode} variant="navbar" />
 
           <div className={`px-2.5 py-1 rounded-full border flex items-center gap-1.5 text-[11px] ${
             isDark 

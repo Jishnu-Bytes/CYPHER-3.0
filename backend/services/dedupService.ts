@@ -6,7 +6,7 @@ import {
   cosineSimilarity,
 } from "../geo.ts";
 import { getAI, isGeminiAvailable, handleGeminiError } from "./geminiService.ts";
-import { GEMINI_EMBEDDING_MODEL } from "../../../config/models.ts";
+import { GEMINI_EMBEDDING_MODEL } from "../config/models.ts";
 
 export async function computeComplaintEmbedding(text: string): Promise<number[]> {
   if (isGeminiAvailable()) {

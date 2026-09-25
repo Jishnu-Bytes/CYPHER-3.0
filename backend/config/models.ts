@@ -1,5 +1,5 @@
 /**
- * CYPHER Sovereign Civic AI Platform
+ * CYPHER-3.0 Sovereign Civic AI Platform
  * Standardized Model Identifiers & AI Officers
  * Enforces gemini-2.5-flash across all municipal triage & multimodal pipelines
  */

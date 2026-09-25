@@ -11,6 +11,7 @@ import {
   Moon
 } from 'lucide-react';
 import { ThemeMode } from '../types';
+import { SyncStatusIndicator } from './SyncStatusIndicator';
 
 interface TopCommandHeaderProps {
   activeFilter: 'all' | 'hitl' | 'merged' | 'resolved';
@@ -74,7 +75,10 @@ export const TopCommandHeader: React.FC<TopCommandHeaderProps> = ({
             <span className="font-bold">🟢 WebSocket: Connected (Sub-50ms)</span>
           </div>
 
-          {/* Badge 2: Gemini 2.5 Flash */}
+          {/* Badge 2: IndexedDB Sync Status Indicator */}
+          <SyncStatusIndicator themeMode={themeMode} variant="hud" />
+
+          {/* Badge 3: Gemini 2.5 Flash */}
           <div className={`px-2.5 py-1 rounded-full border flex items-center gap-1.5 shadow-sm ${
             isDark 
               ? 'bg-slate-900/90 border-cyan-500/40 text-cyan-300' 

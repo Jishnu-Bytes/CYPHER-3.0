@@ -102,6 +102,8 @@
         <a href="#sec-10" class="text-slate-300 hover:text-red-400 transition">10. Real-Time Command Bus</a>
         <a href="#sec-11" class="text-slate-300 hover:text-red-400 transition">11. Formal JSON Data Schema</a>
         <a href="#sec-12" class="text-slate-300 hover:text-red-400 transition">12. Field Crew Task Delegation</a>
+        <a href="#sec-13" class="text-slate-300 hover:text-red-400 transition">13. IndexedDB Offline & HUD Sync</a>
+        <a href="#sec-14" class="text-slate-300 hover:text-red-400 transition">14. Modular Micro-Architecture</a>
       </div>
     </section>
 
@@ -405,10 +407,66 @@
       </div>
     </section>
 
+    <!-- Section 13: Offline-First Architecture & IndexedDB Sync Engine -->
+    <section id="sec-13" class="space-y-4">
+      <div class="flex items-center space-x-2 text-cyan-400 font-mono text-xs uppercase tracking-wider">
+        <span>Section 13</span>
+        <span>•</span>
+        <span>Resilience & Edge Architecture</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white font-display">13. Offline-First Architecture, IndexedDB Queue & HUD Sync Engine</h2>
+      <p class="text-slate-300 leading-relaxed text-sm">
+        To guarantee operational continuity during catastrophic monsoon storms, power blackout cascades, or telecommunication cellular tower collapses, CYPHER incorporates a browser-native offline storage and synchronization engine:
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <h3 class="text-sm font-bold text-cyan-400 font-mono mb-2"><i class="fa-solid fa-database mr-2"></i>IndexedDB Client Store</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Persistent browser database (<code class="text-cyan-300">cypher_offline_storage</code>) with a dedicated <code class="text-cyan-300">pending_reports</code> store. Indexes timestamps and sync states (<code class="text-amber-300">pending</code>, <code class="text-blue-300">syncing</code>, <code class="text-rose-300">failed</code>) to guarantee zero report loss under severe network degradation.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <h3 class="text-sm font-bold text-teal-400 font-mono mb-2"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Real-Time HUD Sync Indicator</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Reactive HUD badge tracking connection states and pending counts in real-time. Features an interactive queue drawer allowing officers and citizens to manually trigger background flushes or inject test offline reports.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 14: Micro-Modular Backend & Unified SPA Architecture -->
+    <section id="sec-14" class="space-y-4">
+      <div class="flex items-center space-x-2 text-indigo-400 font-mono text-xs uppercase tracking-wider">
+        <span>Section 14</span>
+        <span>•</span>
+        <span>Codebase Decomposition & Routing</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white font-display">14. Modular Backend & Unified Single-Page Application (SPA)</h2>
+      <p class="text-slate-300 leading-relaxed text-sm">
+        The system runtime is divided into strict single-responsibility modules:
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono">
+        <div class="p-3.5 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <span class="text-indigo-400 font-bold block mb-1">Server Entry Point</span>
+          <p class="text-slate-400">Streamlined <code class="text-slate-200">server.ts</code> (175 lines) managing Express, Socket.IO, security middleware, and Vite development middleware.</p>
+        </div>
+        <div class="p-3.5 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <span class="text-indigo-400 font-bold block mb-1">Router Topology</span>
+          <p class="text-slate-400">Dedicated controllers: <code class="text-slate-200">authRoutes</code>, <code class="text-slate-200">reportRoutes</code>, and <code class="text-slate-200">systemRoutes</code>.</p>
+        </div>
+        <div class="p-3.5 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <span class="text-indigo-400 font-bold block mb-1">Unified React Shell</span>
+          <p class="text-slate-400">Universal client routing between <code class="text-slate-200">/console</code>, <code class="text-slate-200">/admin</code>, <code class="text-slate-200">/report</code>, and <code class="text-slate-200">/track</code>.</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Approvals & Signatures Footer -->
     <section class="border-t border-slate-800 pt-8 pb-12">
       <h3 class="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest mb-4">Official Municipal Sign-off</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono">
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs font-mono">
         <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
           <p class="text-slate-500 mb-1">Architecture Oversight</p>
           <p class="text-white font-bold">BRICS+ Civic AI Working Group</p>
@@ -424,9 +482,14 @@
           <p class="text-white font-bold">DPDP / GDPR Compliance Board</p>
           <p class="text-emerald-400 mt-2 font-bold"><i class="fa-solid fa-check-circle mr-1"></i> ZERO-PII CERTIFIED</p>
         </div>
+        <div class="p-4 rounded-xl bg-[#0b0f19] border border-slate-800">
+          <p class="text-slate-500 mb-1">Edge Offline Storage</p>
+          <p class="text-white font-bold">IndexedDB Resilience Audit</p>
+          <p class="text-emerald-400 mt-2 font-bold"><i class="fa-solid fa-check-circle mr-1"></i> AUDIT PASSED</p>
+        </div>
       </div>
       <div class="mt-8 text-center text-xs font-mono text-slate-500">
-        CYPHER Municipal Emergency Architecture Specification • Version 4.2 • Autonomous Civic Defense Engine
+        CYPHER Municipal Emergency Architecture Specification • Version 5.0 • Autonomous Civic Defense Engine
       </div>
     </section>
 

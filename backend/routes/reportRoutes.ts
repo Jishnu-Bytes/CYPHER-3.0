@@ -29,8 +29,8 @@ import {
   AI_OFFICER_NAME,
   AI_INSPECTOR_NAME,
   CIVIC_DEDUP_OFFICER,
-} from "../../../config/models.ts";
-import { persistReports } from "../../../config/persistence.ts";
+} from "../config/models.ts";
+import { persistReports } from "../config/persistence.ts";
 
 export function createReportRouter(reportsStore: CivicReport[], io: SocketIOServer): Router {
   const router = Router();

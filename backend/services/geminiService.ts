@@ -3,11 +3,11 @@ import {
   GEMINI_PRIMARY_MODEL,
   GEMINI_TRIAGE_MODEL,
   GEMINI_EMBEDDING_MODEL,
-} from "../../../config/models.ts";
+} from "../config/models.ts";
 import {
   lookupMunicipalDepartment,
   lookupMunicipalDepartmentDeclaration,
-} from "../../../config/municipalTools.ts";
+} from "../config/municipalTools.ts";
 import { TriageResult } from "../types.ts";
 
 // Lazy-initialized Gemini AI Client

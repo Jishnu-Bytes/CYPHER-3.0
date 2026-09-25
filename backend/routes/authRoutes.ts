@@ -4,8 +4,8 @@ import { Type } from "@google/genai";
 import { OTPRecord } from "../types.ts";
 import { redisCache } from "../cache.ts";
 import { getAI, isGeminiAvailable, handleGeminiError } from "../services/geminiService.ts";
-import { GEMINI_PRIMARY_MODEL } from "../../../config/models.ts";
-import { generateCitizenToken, generateOperatorToken } from "../../../config/security.ts";
+import { GEMINI_PRIMARY_MODEL } from "../config/models.ts";
+import { generateCitizenToken, generateOperatorToken } from "../config/security.ts";
 
 export const authRouter = Router();
 

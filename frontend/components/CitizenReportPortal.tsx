@@ -15,6 +15,8 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { ThemeMode } from '../types';
+import { indexedDbSyncManager } from '../services/indexedDbService';
+import { CloudUpload } from 'lucide-react';
 
 interface CitizenReportPortalProps {
   themeMode: ThemeMode;
@@ -137,6 +139,35 @@ export const CitizenReportPortal: React.FC<CitizenReportPortalProps> = ({
       if (lng !== '') formData.append('lng', String(lng));
       if (selectedFile) formData.append('photo', selectedFile);
 
+      // If device is offline or user requested offline save, store directly in IndexedDB
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        const offlineRec = await indexedDbSyncManager.saveOfflineReport({
+          citizenName: citizenName || 'Offline Citizen',
+          verifiedPhone: verifiedPhone || '+91 98765 43210',
+          country,
+          problemDomain,
+          location,
+          typedComplaint,
+          lat: lat !== '' ? Number(lat) : undefined,
+          lng: lng !== '' ? Number(lng) : undefined,
+          photoDataUrl: imagePreview || undefined,
+        });
+
+        setSubmittedTicket({
+          id: offlineRec.id,
+          ticketId: offlineRec.ticketId,
+          referenceId: offlineRec.ticketId,
+          timestamp: offlineRec.timestamp,
+          hazardPriorityScore: 4,
+          finalCategory: problemDomain,
+          location,
+          status: 'PENDING_OFFLINE',
+          recommendedDispatchUnit: 'Local IndexedDB Queue (Awaiting Network)',
+          isOfflineSaved: true,
+        });
+        return;
+      }
+
       const res = await fetch('/api/reports/submit', {
         method: 'POST',
         body: formData,
@@ -155,7 +186,74 @@ export const CitizenReportPortal: React.FC<CitizenReportPortalProps> = ({
         setErrorMsg(data.error || 'Failed to submit report. Please try again.');
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Network error submitting report.');
+      // Network failure: automatically save to IndexedDB offline queue
+      try {
+        const offlineRec = await indexedDbSyncManager.saveOfflineReport({
+          citizenName: citizenName || 'Offline Citizen',
+          verifiedPhone: verifiedPhone || '+91 98765 43210',
+          country,
+          problemDomain,
+          location,
+          typedComplaint,
+          lat: lat !== '' ? Number(lat) : undefined,
+          lng: lng !== '' ? Number(lng) : undefined,
+          photoDataUrl: imagePreview || undefined,
+        });
+
+        setSubmittedTicket({
+          id: offlineRec.id,
+          ticketId: offlineRec.ticketId,
+          referenceId: offlineRec.ticketId,
+          timestamp: offlineRec.timestamp,
+          hazardPriorityScore: 4,
+          finalCategory: problemDomain,
+          location,
+          status: 'PENDING_OFFLINE',
+          recommendedDispatchUnit: 'Local IndexedDB Queue (Awaiting Network)',
+          isOfflineSaved: true,
+        });
+      } catch (idbErr: any) {
+        setErrorMsg(`Network and offline storage error: ${err?.message || idbErr?.message}`);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveOfflineTest = async () => {
+    if (!location.trim() || !typedComplaint.trim()) {
+      setErrorMsg('Please specify location and complaint before queuing offline.');
+      return;
+    }
+    setErrorMsg(null);
+    setIsSubmitting(true);
+    try {
+      const offlineRec = await indexedDbSyncManager.saveOfflineReport({
+        citizenName: citizenName || 'Test Citizen',
+        verifiedPhone: verifiedPhone || '+91 98765 43210',
+        country,
+        problemDomain,
+        location,
+        typedComplaint,
+        lat: lat !== '' ? Number(lat) : undefined,
+        lng: lng !== '' ? Number(lng) : undefined,
+        photoDataUrl: imagePreview || undefined,
+      });
+
+      setSubmittedTicket({
+        id: offlineRec.id,
+        ticketId: offlineRec.ticketId,
+        referenceId: offlineRec.ticketId,
+        timestamp: offlineRec.timestamp,
+        hazardPriorityScore: 4,
+        finalCategory: problemDomain,
+        location,
+        status: 'PENDING_OFFLINE',
+        recommendedDispatchUnit: 'Local IndexedDB Queue (Awaiting Network)',
+        isOfflineSaved: true,
+      });
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Failed to save into IndexedDB.');
     } finally {
       setIsSubmitting(false);
     }
@@ -473,12 +571,23 @@ export const CitizenReportPortal: React.FC<CitizenReportPortalProps> = ({
             </div>
           </div>
 
-          {/* Submit Action Button */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          {/* Submit Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+            <button
+              type="button"
+              onClick={handleSaveOfflineTest}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-amber-500/50 hover:border-amber-400 bg-amber-950/30 hover:bg-amber-900/40 text-amber-300 font-mono font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
+              title="Save directly into IndexedDB to test the HUD Sync Status indicator"
+            >
+              <CloudUpload className="w-4 h-4 text-amber-400" />
+              <span>Queue Offline (Test Sync Status)</span>
+            </button>
+
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-mono font-bold text-sm tracking-wide shadow-xl shadow-cyan-950/50 flex items-center gap-2 transition disabled:opacity-50 cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-mono font-bold text-sm tracking-wide shadow-xl shadow-cyan-950/50 flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
                 <>

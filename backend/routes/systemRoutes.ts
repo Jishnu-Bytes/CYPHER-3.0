@@ -9,7 +9,7 @@ import {
   GEMINI_TRIAGE_MODEL,
   MODEL_DISPLAY_NAMES,
   AI_INSPECTOR_NAME,
-} from "../../../config/models.ts";
+} from "../config/models.ts";
 
 export function createSystemRouter(reportsStore: CivicReport[], io: SocketIOServer): Router {
   const router = Router();
