@@ -3,7 +3,14 @@
  * Shared Utilities: Demo Mode Failsafe, Canvas Image Compression, & Responsive Guards
  */
 
-// 1. DEMO MODE MANAGEMENT & SANDBOX UI VISIBILITY
+// 1. CENTRALIZED MODEL CONSTANTS (Shared across all UI portals)
+window.CYPHER_MODEL = {
+  id: "gemini-2.5-flash",
+  name: "Gemini 2.5 Flash",
+  badge: "Gemini-2.5-Flash Online",
+};
+
+// 2. DEMO MODE MANAGEMENT & SANDBOX UI VISIBILITY
 window.CYPHER_DEMO_MODE = (function() {
   try {
     const saved = localStorage.getItem('cypher_demo_mode');
@@ -31,23 +38,63 @@ function applySandboxVisibility() {
   }
 }
 
-// Fetch server config on initialization to synchronize live/demo mode environment
+function updateModelBadges() {
+  const modelName = window.CYPHER_MODEL?.name || "Gemini 2.5 Flash";
+  const modelBadge = window.CYPHER_MODEL?.badge || "Gemini-2.5-Flash Online";
+
+  // Update header badges
+  document.querySelectorAll('[data-i18n="onlineStatus"], .gemini-online-badge').forEach(el => {
+    el.textContent = modelBadge;
+  });
+
+  // Update repair verification button if present on page
+  const repairBtn = document.getElementById('btn-verify-repair');
+  if (repairBtn && !repairBtn.disabled) {
+    const span = repairBtn.querySelector('span');
+    if (span && !span.textContent.includes('Analyzing')) {
+      span.textContent = `Verify Repair with ${modelName}`;
+    }
+  }
+
+  // Update any elements with data-cypher-model
+  document.querySelectorAll('[data-cypher-model]').forEach(el => {
+    el.textContent = modelName;
+  });
+}
+
+// Fetch server config on initialization to synchronize live/demo mode environment and model constant
 (async function syncServerConfig() {
   try {
     const res = await fetch('/api/config');
     if (res.ok) {
       const cfg = await res.json();
+      if (cfg.model && cfg.modelDisplayName) {
+        window.CYPHER_MODEL = {
+          id: cfg.model,
+          name: cfg.modelDisplayName,
+          badge: cfg.badgeText || `${cfg.modelDisplayName} Online`,
+        };
+      }
       const saved = localStorage.getItem('cypher_demo_mode');
       if (saved === null && typeof cfg.demoMode === 'boolean') {
         window.CYPHER_DEMO_MODE = cfg.demoMode;
       }
       applySandboxVisibility();
       renderDemoBadge();
+      updateModelBadges();
     }
   } catch(e) {
     applySandboxVisibility();
+    updateModelBadges();
   }
 })();
+
+// Also trigger badge update on DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', updateModelBadges);
+} else {
+  updateModelBadges();
+}
 
 function setDemoMode(active) {
   window.CYPHER_DEMO_MODE = !!active;
@@ -56,10 +103,11 @@ function setDemoMode(active) {
   } catch(e) {}
   applySandboxVisibility();
   renderDemoBadge();
+  const modelName = window.CYPHER_MODEL?.name || "Gemini 2.5 Flash";
   showToast(
     window.CYPHER_DEMO_MODE 
       ? "⚡ DEMO MODE ACTIVATED: Submissions use realistic 250ms synthetic models."
-      : "🟢 LIVE AI MODE ACTIVATED: Realtime Gemini 2.0 Flash connected.",
+      : `🟢 LIVE AI MODE ACTIVATED: Realtime ${modelName} connected.`,
     window.CYPHER_DEMO_MODE ? "warning" : "success"
   );
   window.dispatchEvent(new CustomEvent('cypher-demo-mode-changed', { detail: { active: window.CYPHER_DEMO_MODE } }));

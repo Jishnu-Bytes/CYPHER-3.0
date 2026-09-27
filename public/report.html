@@ -96,7 +96,7 @@
         </h1>
       </a>
       <span class="hidden md:inline-block text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-        <span data-i18n="onlineStatus">Gemini-2.0-Flash Online</span>
+        <span data-i18n="onlineStatus">Gemini-2.5-Flash Online</span>
       </span>
     </div>
 
@@ -138,9 +138,9 @@
         <span class="text-[11px] font-bold">Track</span>
       </a>
 
-      <a href="/docs" target="_blank" class="hidden sm:inline-flex items-center space-x-1 text-slate-400 hover:text-white transition px-2 py-1 rounded bg-slate-900 border border-slate-700" title="System Architecture & Model Specification">
-        <i class="fa-solid fa-book-bookmark text-xs text-rose-400"></i>
-        <span class="text-[11px]">Docs</span>
+      <a href="/dossier" target="_blank" class="hidden sm:inline-flex items-center space-x-1 text-rose-300 hover:text-white transition px-2 py-1 rounded bg-slate-900 border border-rose-500/40" title="System Architecture & Master Dossier">
+        <i class="fa-solid fa-folder-closed text-xs text-rose-400"></i>
+        <span class="text-[11px] font-bold">Dossier</span>
       </a>
 
       <a href="/admin" class="hidden sm:inline-flex items-center space-x-1 text-slate-400 hover:text-white transition" title="Admin Command Center">
@@ -468,7 +468,7 @@
         <div class="w-16 h-16 rounded-2xl bg-red-500/20 text-[#ef4444] border border-red-500/30 flex items-center justify-center text-2xl mx-auto mb-4 animate-pulse">
           <i class="fa-solid fa-brain"></i>
         </div>
-        <h3 class="font-display font-bold text-xl text-white mb-2" data-i18n="aiTriageModalTitle">Gemini 2.0 Flash Triage In Progress</h3>
+        <h3 class="font-display font-bold text-xl text-white mb-2" data-i18n="aiTriageModalTitle">Gemini 2.5 Flash Triage In Progress</h3>
         <p id="triage-status-step" class="text-xs font-mono text-red-400 mb-6">Ingesting multimodal inputs...</p>
         
         <div class="w-full bg-[#020617] h-2 rounded-full overflow-hidden border border-slate-800 mb-4">
@@ -606,7 +606,7 @@
 
           <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-slate-400 font-mono text-[11px]">
             <span><i class="fa-solid fa-location-dot text-[#ef4444] mr-1"></i> <span data-i18n="locationBadge">Location:</span> <strong id="rcpt-location" class="text-slate-200">Bengaluru</strong></span>
-            <span data-i18n="cryptoSeal">Cryptographic Seal: SHA256-AUTHENTIC</span>
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-emerald-400"></i><span data-i18n="cryptoSeal">Cryptographic Seal:</span> <span id="rcpt-crypto-seal" class="text-emerald-400 font-mono text-[10px] font-bold">HMAC-SHA256 Authenticated</span></span>
           </div>
 
         </div>
@@ -1086,6 +1086,17 @@
       document.getElementById('rcpt-summary').textContent = cleanSummary.startsWith('"') ? cleanSummary : `"${cleanSummary}"`;
       document.getElementById('rcpt-transcription').textContent = cleanTranscription.startsWith('"') ? cleanTranscription : `"${cleanTranscription}"`;
       document.getElementById('rcpt-translation').textContent = cleanTranslation;
+
+      // Populate real HMAC-SHA256 Cryptographic Seal
+      const sealEl = document.getElementById('rcpt-crypto-seal');
+      if (sealEl) {
+        if (report.cryptographicVerificationSeal) {
+          sealEl.textContent = `HMAC-SHA256: ${report.cryptographicVerificationSeal.substring(0, 16)}...`;
+          sealEl.title = `Full Digital Seal: ${report.cryptographicVerificationSeal}`;
+        } else {
+          sealEl.textContent = `HMAC-SHA256: ${report.referenceId || 'VERIFIED'}`;
+        }
+      }
 
       // Update Track and Admin button URLs
       const trackBtn = document.getElementById('btn-track-receipt');

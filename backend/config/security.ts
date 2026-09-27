@@ -14,6 +14,43 @@ export interface JWTPayload {
 }
 
 /**
+ * Computes a real cryptographic HMAC-SHA256 seal for a civic report payload
+ */
+export function generateHMACSeal(payload: {
+  referenceId: string;
+  timestamp?: string;
+  citizenName?: string;
+  location?: string;
+  priorityScore?: number | string;
+  finalCategory?: string;
+}): string {
+  const data = [
+    payload.referenceId || "REF-UNKNOWN",
+    payload.timestamp || new Date().toISOString(),
+    payload.citizenName || "CITIZEN",
+    payload.location || "GEO-UNSPECIFIED",
+    payload.priorityScore || "1",
+    payload.finalCategory || "CIVIC"
+  ].join("|");
+  return crypto.createHmac("sha256", JWT_SECRET).update(data).digest("hex");
+}
+
+/**
+ * Verifies whether an HMAC-SHA256 seal matches a report payload
+ */
+export function verifyHMACSeal(payload: any, seal: string): boolean {
+  if (!seal || typeof seal !== "string") return false;
+  const expected = generateHMACSeal(payload);
+  try {
+    const sealBuf = Buffer.from(seal.trim());
+    const expBuf = Buffer.from(expected.trim());
+    return sealBuf.length === expBuf.length && crypto.timingSafeEqual(sealBuf, expBuf);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Signs a stateless HMAC-SHA256 JWT
  */
 export function signJWT(payload: JWTPayload, expiresInSec = 86400): string {

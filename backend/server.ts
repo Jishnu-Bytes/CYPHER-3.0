@@ -12,6 +12,12 @@ import { authRouter } from "./routes/authRoutes.ts";
 import { createReportRouter } from "./routes/reportRoutes.ts";
 import { createSystemRouter } from "./routes/systemRoutes.ts";
 import { loadPersistedReports } from "./config/persistence.ts";
+import {
+  GEMINI_PRIMARY_MODEL,
+  MODEL_DISPLAY_NAMES,
+  AI_OFFICER_NAME,
+  AI_INSPECTOR_NAME,
+} from "./config/models.ts";
 
 dotenv.config();
 
@@ -145,8 +151,42 @@ async function startServer() {
     res.sendFile(path.join(publicPath, "select-locale.html"));
   });
 
-  app.get("/docs", (req: Request, res: Response) => {
-    res.sendFile(path.join(publicPath, "docs.html"));
+  app.get(["/dossier", "/master-dossier", "/system-dossier", "/docs"], (req: Request, res: Response) => {
+    res.sendFile(path.join(publicPath, "dossier.html"));
+  });
+
+  // Centralized Model Configuration Endpoint (Enforces single standardized model constant)
+  app.get(["/api/config/models", "/api/config"], (req: Request, res: Response) => {
+    res.json({
+      model: GEMINI_PRIMARY_MODEL,
+      modelDisplayName: MODEL_DISPLAY_NAMES.PRIMARY,
+      badgeText: MODEL_DISPLAY_NAMES.STATUS,
+      aiOfficerName: AI_OFFICER_NAME,
+      aiInspectorName: AI_INSPECTOR_NAME,
+      demoMode: process.env.NEXT_PUBLIC_DEMO_MODE === "true",
+    });
+  });
+
+  // Master System Dossier PDF Direct Download Endpoints
+  app.get(["/CYPHER_MASTER_SYSTEM_DOSSIER.pdf", "/dossier.pdf", "/api/dossier/download-pdf"], (req: Request, res: Response) => {
+    const pdfPath = path.join(publicPath, "CYPHER_MASTER_SYSTEM_DOSSIER.pdf");
+    if (fs.existsSync(pdfPath)) {
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", 'attachment; filename="CYPHER_MASTER_SYSTEM_DOSSIER.pdf"');
+      return res.sendFile(pdfPath);
+    }
+    // Fallback: generate dynamically if missing
+    import("./scripts/generateDossierPdf.ts")
+      .then(mod => mod.generateMasterDossierPdf(pdfPath))
+      .then(() => {
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", 'attachment; filename="CYPHER_MASTER_SYSTEM_DOSSIER.pdf"');
+        return res.sendFile(pdfPath);
+      })
+      .catch(err => {
+        console.error("PDF generation error:", err);
+        return res.status(500).json({ error: "Failed to generate dossier PDF" });
+      });
   });
 
   app.get("/planet", (req: Request, res: Response) => {

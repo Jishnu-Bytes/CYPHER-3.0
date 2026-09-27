@@ -81,7 +81,14 @@ export function createSystemRouter(reportsStore: CivicReport[], io: SocketIOServ
         }
 
         const report = reportsStore.find(r => r.id === ticketId || r.ticketId === ticketId || r.referenceId === ticketId);
-        const result = await verifyRepair(beforeBase64, afterBase64, isDemo);
+        if (!beforeBase64 && report) {
+          beforeBase64 = report.preRepairPhotoUrl || report.photoBase64 || "";
+        }
+        if (!afterBase64 && report) {
+          afterBase64 = report.postRepairPhotoUrl || "";
+        }
+        const contextCategory = report?.finalCategory || report?.issueCategory || "Civic Infrastructure";
+        const result = await verifyRepair(beforeBase64, afterBase64, isDemo, contextCategory);
 
         if (report) {
           report.resolutionQualityScore = result.resolutionQualityScore;

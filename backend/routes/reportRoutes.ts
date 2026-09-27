@@ -30,6 +30,7 @@ import {
   AI_INSPECTOR_NAME,
   CIVIC_DEDUP_OFFICER,
 } from "../config/models.ts";
+import { generateHMACSeal } from "../config/security.ts";
 import { persistReports } from "../config/persistence.ts";
 
 export function createReportRouter(reportsStore: CivicReport[], io: SocketIOServer): Router {
@@ -337,6 +338,14 @@ Transcribe verbatim in regional script, translate to English, categorize, assign
           corroboratedReports: 1,
           livenessVerified: livenessVerified === "true" || livenessVerified === true,
           piiRedacted: piiRedacted === "true" || piiRedacted === true,
+          cryptographicVerificationSeal: generateHMACSeal({
+            referenceId,
+            timestamp: new Date().toISOString(),
+            citizenName,
+            location,
+            priorityScore: critScore,
+            finalCategory: triageResult.finalCategory,
+          }),
         };
 
         reportsStore.unshift(newReport);
