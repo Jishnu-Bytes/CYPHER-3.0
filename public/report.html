@@ -618,11 +618,15 @@
             <span data-i18n="btnPrintReceipt">Print Official Receipt</span>
           </button>
 
-          <div class="flex items-center space-x-3 w-full sm:w-auto">
-            <button onclick="fileAnotherReport()" class="w-full sm:w-auto px-5 py-3 rounded-full border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white font-mono text-xs transition flex items-center justify-center space-x-2">
+          <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <button onclick="fileAnotherReport()" class="w-full sm:w-auto px-4 py-3 rounded-full border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white font-mono text-xs transition flex items-center justify-center space-x-2">
               <i class="fa-solid fa-plus text-xs"></i>
-              <span data-i18n="btnFileAnother">File Another Report</span>
+              <span data-i18n="btnFileAnother">File Another</span>
             </button>
+            <a id="btn-admin-receipt" href="/admin" target="_blank" class="w-full sm:w-auto px-4 py-3 rounded-full bg-slate-800 hover:bg-slate-700 text-blue-300 border border-blue-500/30 font-mono text-xs transition flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-desktop text-xs"></i>
+              <span>View in Admin Desk</span>
+            </a>
             <a id="btn-track-receipt" href="/track" class="w-full sm:w-auto px-6 py-3 rounded-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-display font-bold text-xs shadow-lg shadow-red-500/20 transition flex items-center justify-center space-x-2">
               <i class="fa-solid fa-satellite-dish text-xs"></i>
               <span data-i18n="btnTrackReport">Track Complaint</span>
@@ -1083,10 +1087,14 @@
       document.getElementById('rcpt-transcription').textContent = cleanTranscription.startsWith('"') ? cleanTranscription : `"${cleanTranscription}"`;
       document.getElementById('rcpt-translation').textContent = cleanTranslation;
 
-      // Update Track button URL with reference ID
+      // Update Track and Admin button URLs
       const trackBtn = document.getElementById('btn-track-receipt');
       if (trackBtn && report.referenceId) {
         trackBtn.href = `/track?ref=${encodeURIComponent(report.referenceId)}`;
+      }
+      const adminBtn = document.getElementById('btn-admin-receipt');
+      if (adminBtn && (report.id || report.referenceId)) {
+        adminBtn.href = `/admin?highlight=${encodeURIComponent(report.id || report.referenceId)}`;
       }
 
       // Save report in local storage for citizen history tracking

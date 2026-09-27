@@ -356,6 +356,11 @@
       <!-- Quick Filter Buttons -->
       <div class="flex flex-wrap items-center gap-2 w-full md:w-auto text-xs font-mono">
         
+        <select id="filter-sort" onchange="sortReports(); applyFilters();" class="bg-[#020617] border border-red-500/50 rounded-xl px-3 py-2 text-white focus:outline-none font-bold text-[#ef4444]">
+          <option value="newest">🕒 Sort: Newest Filed First</option>
+          <option value="priority">⚡ Sort: Highest Priority (5→1)</option>
+        </select>
+
         <select id="filter-country" onchange="applyFilters()" class="bg-[#020617] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none">
           <option value="ALL">All Nations (🇮🇳 🇧🇷 🇿🇦 🇷🇺 🇨🇳)</option>
           <option value="India">🇮🇳 India</option>
@@ -381,6 +386,15 @@
           <option value="3">Priority 3/5 (Moderate)</option>
           <option value="2">Priority 2/5 (Standard)</option>
           <option value="1">Priority 1/5 (Cosmetic)</option>
+        </select>
+
+        <select id="filter-status" onchange="applyFilters()" class="bg-[#020617] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none font-semibold">
+          <option value="ALL">All Incident Statuses</option>
+          <option value="dispatched">🚚 Dispatched</option>
+          <option value="progress">🔧 In Progress</option>
+          <option value="resolved">✓ Resolved</option>
+          <option value="hitl">🛡️ HITL in Process</option>
+          <option value="open">⏳ Open / Intake</option>
         </select>
 
         <button onclick="refreshData()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white" title="Refresh Feed">
@@ -874,14 +888,29 @@
 
     async function loadReports() {
       try {
+        const params = new URLSearchParams(window.location.search);
+        const highlight = params.get('highlight') || params.get('ref');
+        if (highlight) {
+          window.highlightReportId = highlight;
+        }
+
         const res = await fetch('/api/reports');
         const json = await res.json();
         if (json.success && json.reports) {
           allReports = json.reports;
           sortReports();
-          applyFilters();
+          applyFilters(window.highlightReportId);
           updateKPIs();
           updateGisMap();
+
+          if (window.highlightReportId) {
+            setTimeout(() => {
+              const row = document.querySelector('.new-report-flash');
+              if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }, 300);
+          }
         }
       } catch(err) {
         console.error(err);
@@ -892,12 +921,45 @@
       loadReports();
     }
 
-    function sortReports() {
-      allReports.sort((a, b) => {
-        if (b.hazardPriorityScore !== a.hazardPriorityScore) {
-          return b.hazardPriorityScore - a.hazardPriorityScore;
+    // Background sync polling every 3 seconds to guarantee newly filed complaints show instantly
+    setInterval(async () => {
+      try {
+        const token = sessionStorage.getItem('brics_admin_token');
+        if (!token) return;
+        const res = await fetch('/api/reports');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json.success && Array.isArray(json.reports)) {
+          if (json.reports.length !== allReports.length || (json.reports[0] && allReports[0] && json.reports[0].id !== allReports[0].id)) {
+            allReports = json.reports;
+            sortReports();
+            applyFilters(window.highlightReportId);
+            updateKPIs();
+            updateGisMap();
+          }
         }
-        return b.createdAt - a.createdAt;
+      } catch(e) {}
+    }, 3000);
+
+    function sortReports() {
+      const sortSelect = document.getElementById('filter-sort');
+      const sortMode = sortSelect ? sortSelect.value : 'newest';
+
+      allReports.sort((a, b) => {
+        if (window.highlightReportId) {
+          const aIsH = a.id === window.highlightReportId || a.referenceId === window.highlightReportId;
+          const bIsH = b.id === window.highlightReportId || b.referenceId === window.highlightReportId;
+          if (aIsH && !bIsH) return -1;
+          if (!aIsH && bIsH) return 1;
+        }
+        if (sortMode === 'priority') {
+          if (b.hazardPriorityScore !== a.hazardPriorityScore) {
+            return b.hazardPriorityScore - a.hazardPriorityScore;
+          }
+          return (b.createdAt || 0) - (a.createdAt || 0);
+        }
+        // Default 'newest': Always brings freshly submitted complaints right to row 1!
+        return (b.createdAt || 0) - (a.createdAt || 0);
       });
     }
 
@@ -905,7 +967,10 @@
       document.getElementById('stat-total').textContent = allReports.length;
       const criticalCount = allReports.filter(r => r.hazardPriorityScore === 5).length;
       document.getElementById('stat-critical').textContent = criticalCount;
-      const dispatchedCount = allReports.filter(r => r.status === 'Dispatched' || r.status === 'In Progress').length;
+      const dispatchedCount = allReports.filter(r => {
+        const s = (r.status || '').toLowerCase();
+        return s.includes('dispatch') || s.includes('progress') || s.includes('hitl');
+      }).length;
       document.getElementById('stat-dispatched').textContent = dispatchedCount;
     }
 
@@ -914,13 +979,18 @@
       const country = document.getElementById('filter-country').value;
       const category = document.getElementById('filter-category').value;
       const priority = document.getElementById('filter-priority').value;
+      const statusVal = document.getElementById('filter-status') ? document.getElementById('filter-status').value : 'ALL';
 
       const filtered = allReports.filter(r => {
         if (country !== 'ALL' && !r.country.toLowerCase().includes(country.toLowerCase())) return false;
         if (category !== 'ALL' && r.finalCategory !== category && r.problemDomain !== category) return false;
         if (priority !== 'ALL' && String(r.hazardPriorityScore) !== priority) return false;
+        if (statusVal !== 'ALL') {
+          const st = (r.status || '').toLowerCase();
+          if (!st.includes(statusVal.toLowerCase())) return false;
+        }
         if (search) {
-          const matchStr = `${r.referenceId} ${r.citizenName} ${r.location} ${r.summary} ${r.transcription} ${r.englishTranslation} ${r.problemDomain || ''}`.toLowerCase();
+          const matchStr = `${r.referenceId} ${r.citizenName} ${r.location} ${r.summary} ${r.transcription} ${r.englishTranslation} ${r.problemDomain || ''} ${r.status || ''}`.toLowerCase();
           if (!matchStr.includes(search)) return false;
         }
         return true;
@@ -944,35 +1014,62 @@
       }
 
       tbody.innerHTML = reports.map(r => {
-        const isHighlight = highlightId && r.id === highlightId ? 'new-report-flash' : '';
+        const isHighlight = (highlightId && r.id === highlightId) || (window.highlightReportId && (r.id === window.highlightReportId || r.referenceId === window.highlightReportId)) ? 'new-report-flash ring-2 ring-red-500/80 bg-red-950/20' : '';
         const priorityClass = `priority-${r.hazardPriorityScore}-row`;
 
         let badgeScore = '';
         if (r.hazardPriorityScore === 5) {
-          badgeScore = `<span class="px-2 py-0.5 rounded bg-[#ef4444]/20 text-[#ef4444] text-[10px] font-bold border border-[#ef4444]/30">PRIORITY 5/5</span>`;
+          badgeScore = `<span class="px-2 py-0.5 rounded bg-[#ef4444]/20 text-[#ef4444] text-[10px] font-bold border border-[#ef4444]/30 flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>5/5 CRITICAL</span>`;
         } else if (r.hazardPriorityScore === 4) {
-          badgeScore = `<span class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 text-[10px] font-bold border border-orange-500/30">PRIORITY 4/5</span>`;
+          badgeScore = `<span class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 text-[10px] font-bold border border-orange-500/30">4/5 SEVERE</span>`;
         } else if (r.hazardPriorityScore === 3) {
-          badgeScore = `<span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 text-[10px] font-bold border border-yellow-500/30">PRIORITY 3/5</span>`;
+          badgeScore = `<span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 text-[10px] font-bold border border-yellow-500/30">3/5 MODERATE</span>`;
         } else {
-          badgeScore = `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-semibold">PRIORITY ${r.hazardPriorityScore}/5</span>`;
+          badgeScore = `<span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-semibold">${r.hazardPriorityScore}/5 STANDARD</span>`;
         }
 
         const countryFlag = r.country === 'Brazil' ? '🇧🇷' : r.country === 'South Africa' ? '🇿🇦' : r.country === 'Russia' ? '🇷🇺' : r.country === 'China' ? '🇨🇳' : '🇮🇳';
 
         let statusBadge = '';
-        if (r.status === 'Dispatched') statusBadge = `<span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold text-[10px]">Dispatched</span>`;
-        else if (r.status === 'In Progress') statusBadge = `<span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 font-bold text-[10px]">In Progress</span>`;
-        else if (r.status === 'Resolved') statusBadge = `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-[#10b981] border border-emerald-500/30 font-bold text-[10px]">Resolved</span>`;
-        else statusBadge = `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 text-[10px]">Pending</span>`;
+        const st = (r.status || '').toLowerCase();
+        if (st.includes('dispatch')) {
+          statusBadge = `<span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/40 font-bold text-[10px] inline-flex items-center gap-1"><i class="fa-solid fa-truck-fast text-[9px]"></i> Dispatched</span>`;
+        } else if (st.includes('progress')) {
+          statusBadge = `<span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold text-[10px] inline-flex items-center gap-1"><i class="fa-solid fa-screwdriver-wrench text-[9px]"></i> In Progress</span>`;
+        } else if (st.includes('resolve')) {
+          statusBadge = `<span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-[#10b981] border border-emerald-500/40 font-bold text-[10px] inline-flex items-center gap-1"><i class="fa-solid fa-circle-check text-[9px]"></i> Resolved</span>`;
+        } else if (st.includes('hitl') || st.includes('awaiting_validation')) {
+          statusBadge = `<span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold text-[10px] inline-flex items-center gap-1 animate-pulse"><i class="fa-solid fa-user-shield text-[9px]"></i> HITL in Process</span>`;
+        } else {
+          statusBadge = `<span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold text-[10px] inline-flex items-center gap-1"><i class="fa-solid fa-clock text-[9px]"></i> Open</span>`;
+        }
 
         const domainText = r.problemDomain ? `${r.problemDomain}` : `${r.finalCategory}`;
+        const photoSrc = r.preRepairPhotoUrl || r.photoBase64 || '';
+
+        // Media column with thumbnail preview
+        let mediaHtml = '<div class="flex items-center gap-2">';
+        if (photoSrc) {
+          mediaHtml += `<img src="${photoSrc}" alt="Evidence" class="w-8 h-8 rounded-lg object-cover border border-slate-700 hover:scale-150 transition cursor-pointer shadow-sm flex-shrink-0" onclick="openDetailModal('${r.id}')" title="Click to view evidence photo" />`;
+        }
+        if (r.hasAudio) {
+          mediaHtml += `<i class="fa-solid fa-microphone text-blue-400 text-xs" title="Audio Attached"></i>`;
+        }
+        if (!photoSrc && !r.hasAudio) {
+          mediaHtml += `<span class="text-[10px] text-slate-500 font-mono">Text only</span>`;
+        }
+        mediaHtml += '</div>';
+
+        const isRecentCitizenIntake = (Date.now() - (r.createdAt || 0)) < 1000 * 60 * 30;
 
         return `
-          <tr class="${priorityClass} ${isHighlight} hover:bg-slate-800/40 transition">
-            <td class="px-5 py-3.5 whitespace-nowrap">${badgeScore}</td>
+          <tr class="${priorityClass} ${isHighlight} hover:bg-slate-800/40 transition group">
             <td class="px-5 py-3.5 whitespace-nowrap">
-              <span class="font-bold text-white block">${r.referenceId}</span>
+              ${badgeScore}
+              ${isRecentCitizenIntake ? '<span class="mt-1 block text-[9px] font-mono text-emerald-400 font-bold tracking-wider">● LIVE INTAKE</span>' : ''}
+            </td>
+            <td class="px-5 py-3.5 whitespace-nowrap">
+              <span class="font-bold text-white block group-hover:text-blue-300 transition">${r.referenceId}</span>
               <span class="text-[10px] text-slate-400">${countryFlag} ${r.country}</span>
             </td>
             <td class="px-5 py-3.5 whitespace-nowrap font-sans font-semibold text-slate-200">
@@ -980,16 +1077,12 @@
             </td>
             <td class="px-5 py-3.5 whitespace-nowrap">
               <span class="text-white block font-bold truncate max-w-[150px]">${r.citizenName}</span>
-              <span class="text-[10px] text-slate-400 truncate max-w-[160px] block" title="${r.location}">${r.location}</span>
+              <span class="text-[10px] text-slate-400 truncate max-w-[160px] block font-mono" title="${r.location}">${r.location}</span>
             </td>
             <td class="px-5 py-3.5 font-sans text-slate-300 max-w-xs truncate italic" title="${r.summary}">
               ${r.summary}
             </td>
-            <td class="px-5 py-3.5 whitespace-nowrap text-slate-400 space-x-1.5">
-              ${r.hasAudio ? '<i class="fa-solid fa-microphone text-blue-400" title="Audio Attached"></i>' : ''}
-              ${r.hasPhoto ? '<i class="fa-solid fa-image text-emerald-400" title="Photo Attached"></i>' : ''}
-              ${!r.hasAudio && !r.hasPhoto ? '<span class="text-[10px] text-slate-600">Text</span>' : ''}
-            </td>
+            <td class="px-5 py-3.5 whitespace-nowrap">${mediaHtml}</td>
             <td class="px-5 py-3.5 whitespace-nowrap">${statusBadge}</td>
             <td class="px-5 py-3.5 whitespace-nowrap text-right space-x-1.5">
               <button onclick="locateOnMap('${r.id}')" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] font-mono transition inline-flex items-center gap-1" title="Locate problem on Google Map">

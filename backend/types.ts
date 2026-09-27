@@ -38,7 +38,19 @@ export interface CivicReport {
   recommendedDispatchUnit: string;
   estimatedRepairCostUSD?: number;
   recommendedCrewSize?: number;
-  status: "Pending" | "Dispatched" | "In Progress" | "Resolved" | "OPEN" | "IN_PROGRESS" | "RESOLVED" | "DISPATCHED" | "AWAITING_VALIDATION";
+  status:
+    | "Pending"
+    | "Dispatched"
+    | "In Progress"
+    | "Resolved"
+    | "OPEN"
+    | "Open"
+    | "IN_PROGRESS"
+    | "RESOLVED"
+    | "DISPATCHED"
+    | "AWAITING_VALIDATION"
+    | "HITL in Process"
+    | string;
   resolutionQualityScore?: number;
   verificationNotes?: string;
   dispatchLogs: { timestamp: string; note: string; officer?: string }[];

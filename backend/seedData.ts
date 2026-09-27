@@ -36,10 +36,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "GHMC Rapid Inundation Squad & TSSPDCL Electrical Isolation Cell",
     estimatedRepairCostUSD: 2400,
     recommendedCrewSize: 6,
-    status: "OPEN",
+    status: "HITL in Process",
     resolutionQualityScore: 0,
     dispatchLogs: [
-      { timestamp: "2026-08-19 14:33 UTC", note: "CYPHER Corroboration Engine merged 7 citizen signals (<100m Haversine) into 1 ticket.", officer: "Civic AI Core" }
+      { timestamp: "2026-08-19 14:33 UTC", note: "CYPHER Corroboration Engine merged 7 citizen signals (<100m Haversine) into 1 ticket. Level 5 Human-in-the-Loop review active.", officer: "Civic AI Core" }
     ],
     duplicateCount: 7,
     corroboratedReports: 7,
@@ -86,8 +86,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "Citizen acoustic memo reported 'just a tiny curb leak', but uploaded camera frame reveals violent water pipe rupture blasting directly into 11kV step-down transformer.",
     hasAudio: true,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1584467735815-f778f274e296?w=800&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&auto=format&fit=crop&q=80",
     transcription: "Sir chhota sa paani ka leak hai sadak ke kinare, koi badi baat nahi lagti.",
     originalTranscript: "Sir chhota sa paani ka leak hai sadak ke kinare, koi badi baat nahi lagti.",
     englishTranslation: "Sir, just a tiny water leak at the street edge, does not seem like a big deal.",
@@ -100,10 +100,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "High-Voltage Electrical Response Team & Flood Barrier Squad",
     estimatedRepairCostUSD: 3100,
     recommendedCrewSize: 5,
-    status: "OPEN",
+    status: "HITL in Process",
     resolutionQualityScore: 0,
     dispatchLogs: [
-      { timestamp: "2026-08-19 14:41 UTC", note: "Cross-modal contradiction detected between acoustic voice transcript and optical vision features.", officer: "Civic AI Core" }
+      { timestamp: "2026-08-19 14:41 UTC", note: "Cross-modal contradiction detected between acoustic voice transcript and optical vision features. Reviewing in HITL triage queue.", officer: "Civic AI Core" }
     ],
     duplicateCount: 1,
     corroboratedReports: 1,
@@ -142,8 +142,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "రోడ్డు మధ్యలో పెద్ద గుంత ఏర్పడింది, బైక్ నడిపే వాళ్ళు కింద పడిపోతున్నారు. రాత్రి పూట కనిపించక ప్రమాదాలు జరుగుతున్నాయి.",
     hasAudio: true,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&auto=format&fit=crop&q=80",
     transcription: "రోడ్డు మధ్యలో పెద్ద గుంత ఏర్పడింది, బైక్ నడిపే వాళ్ళు కింద పడిపోతున్నారు. రాత్రి పూట కనిపించక ప్రమాదాలు జరుగుతున్నాయి.",
     originalTranscript: "రోడ్డు మధ్యలో పెద్ద గుంత ఏర్పడింది, బైక్ నడిపే వాళ్ళు కింద పడిపోతున్నారు. రాత్రి పూట కనిపించక ప్రమాదాలు జరుగుతున్నాయి.",
     englishTranslation: "A deep crater pothole has formed in the middle of the road. Two-wheeler riders are falling down at night due to lack of street illumination.",
@@ -156,10 +156,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "GHMC Road Maintenance & Bitumen Patch Squad 02",
     estimatedRepairCostUSD: 380,
     recommendedCrewSize: 3,
-    status: "OPEN",
+    status: "Dispatched",
     resolutionQualityScore: 0,
     dispatchLogs: [
-      { timestamp: "2026-08-19 14:18 UTC", note: "Automated AI Triage assigned Priority 4 (Severe Roadway Hazard).", officer: "Civic AI Core" }
+      { timestamp: "2026-08-19 14:18 UTC", note: "Automated AI Triage assigned Priority 4 (Severe Roadway Hazard). Crew GHMC-02 dispatched to scene.", officer: "Civic AI Core" }
     ],
     duplicateCount: 3,
     livenessVerified: true,
@@ -185,8 +185,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "హైటెక్ సిటీ ప్రధాన పైపులైన్ పగిలి మంచి నీరంతా రోడ్డుపై వృథాగా పోతోంది.",
     hasAudio: true,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1584467735815-f778f274e296?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80",
     transcription: "హైటెక్ సిటీ ప్రధాన పైపులైన్ పగిలి మంచి నీరంతా రోడ్డుపై వృథాగా పోతోంది.",
     originalTranscript: "హైటెక్ సిటీ ప్రధాన పైపులైన్ పగిలి మంచి నీరంతా రోడ్డుపై వృథాగా పోతోంది.",
     englishTranslation: "Major potable water pipeline fractured near Cyber Towers, clean drinking water gushing onto the carriageway.",
@@ -199,10 +199,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "HMWSSB Water Supply Rapid Repair Cell",
     estimatedRepairCostUSD: 450,
     recommendedCrewSize: 3,
-    status: "IN_PROGRESS",
+    status: "In Progress",
     resolutionQualityScore: 60,
     dispatchLogs: [
-      { timestamp: "2026-08-19 13:50 UTC", note: "HMWSSB excavation team dispatched to isolate feeder valve.", officer: "Dispatcher K. Rao" }
+      { timestamp: "2026-08-19 13:50 UTC", note: "HMWSSB excavation team on site actively isolating trunk feeder valve.", officer: "Dispatcher K. Rao" }
     ],
     duplicateCount: 2,
     livenessVerified: true,
@@ -228,8 +228,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "చార్మినార్ దగ్గర 11kV ట్రాన్స్‌ఫార్మర్ పేలి మంటలు చెలరేగాయి, వెంటనే పవర్ ఆపాలి.",
     hasAudio: true,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800&auto=format&fit=crop&q=80",
     transcription: "చార్మినార్ దగ్గర 11kV ట్రాన్స్‌ఫార్మర్ పేలి మంటలు చెలరేగాయి, వెంటనే పవర్ ఆపాలి.",
     originalTranscript: "చార్మినార్ దగ్గర 11kV ట్రాన్స్‌ఫార్మర్ పేలి మంటలు చెలరేగాయి, వెంటనే పవర్ ఆపాలి.",
     englishTranslation: "11kV distribution transformer exploded near Charminar heritage precinct, active arcing and sparks threatening pedestrians.",
@@ -242,10 +242,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "TSSPDCL High-Voltage Emergency Rapid Squad & Fire Services",
     estimatedRepairCostUSD: 1200,
     recommendedCrewSize: 5,
-    status: "OPEN",
+    status: "Dispatched",
     resolutionQualityScore: 0,
     dispatchLogs: [
-      { timestamp: "2026-08-19 12:22 UTC", note: "Level 5 Life Emergency alert triggered. Feeder trip signal sent.", officer: "Civic AI Core" }
+      { timestamp: "2026-08-19 12:22 UTC", note: "Level 5 Life Emergency alert triggered. Feeder trip signal sent and fire safety squad dispatched.", officer: "Civic AI Core" }
     ],
     duplicateCount: 5,
     livenessVerified: true,
@@ -273,8 +273,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "Cratera profunda se abriu na faixa exclusiva de ônibus da Avenida Paulista, causando lentidão extrema.",
     hasAudio: true,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1508873696983-2df5703bc20d?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&auto=format&fit=crop&q=80",
     transcription: "Cratera profunda se abriu na faixa exclusiva de ônibus da Avenida Paulista, causando lentidão extrema.",
     originalTranscript: "Cratera profunda se abriu na faixa exclusiva de ônibus da Avenida Paulista, causando lentidão extrema.",
     englishTranslation: "Deep asphalt crater opened in the dedicated bus lane on Paulista Avenue, disrupting transit corridor flow.",
@@ -287,10 +287,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "CET SP & Pavimentação Urbana Regional Sé",
     estimatedRepairCostUSD: 520,
     recommendedCrewSize: 3,
-    status: "IN_PROGRESS",
+    status: "In Progress",
     resolutionQualityScore: 78,
     dispatchLogs: [
-      { timestamp: "2026-08-19 14:05 UTC", note: "CET transit diversion deployed around sinkhole.", officer: "Operador CET 12" }
+      { timestamp: "2026-08-19 14:05 UTC", note: "CET transit diversion active; paving heavy equipment milling road.", officer: "Operador CET 12" }
     ],
     duplicateCount: 2,
     livenessVerified: true,
@@ -316,8 +316,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "Rompimento de adutora mestre da Sabesp inundando garagens subterrâneas e calçadas em Pinheiros.",
     hasAudio: true,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1584467735815-f778f274e296?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80",
     transcription: "Rompimento de adutora mestre da Sabesp inundando garagens subterrâneas e calçadas em Pinheiros.",
     originalTranscript: "Rompimento de adutora mestre da Sabesp inundando garagens subterrâneas e calçadas em Pinheiros.",
     englishTranslation: "Master distribution water trunk burst flooding underground basements and pedestrian sidewalks in Pinheiros.",
@@ -330,10 +330,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "SABESP Emergência Hidráulica & Defesa Civil SP",
     estimatedRepairCostUSD: 890,
     recommendedCrewSize: 4,
-    status: "OPEN",
+    status: "HITL in Process",
     resolutionQualityScore: 0,
     dispatchLogs: [
-      { timestamp: "2026-08-19 13:15 UTC", note: "Emergency valve isolation requested to Sabesp control center.", officer: "Civic AI Core" }
+      { timestamp: "2026-08-19 13:15 UTC", note: "Emergency valve isolation pending supervisor approval in HITL desk.", officer: "Civic AI Core" }
     ],
     duplicateCount: 4,
     livenessVerified: true,
@@ -359,8 +359,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "Guarda-corpo da passarela de pedestres foi consertado e pintado pela equipe municipal.",
     hasAudio: false,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1590496793998-38a4a58b88ef?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80",
     transcription: "Guarda-corpo da passarela de pedestres foi consertado e pintado pela equipe municipal.",
     originalTranscript: "Guarda-corpo da passarela de pedestres foi consertado e pintado pela equipe municipal.",
     englishTranslation: "Pedestrian overpass safety railing has been reinforced, re-welded, and coated by municipal crews.",
@@ -373,10 +373,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "SIURB Secretaria de Infraestrutura Urbana",
     estimatedRepairCostUSD: 240,
     recommendedCrewSize: 2,
-    status: "RESOLVED",
+    status: "Resolved",
     resolutionQualityScore: 96,
     dispatchLogs: [
-      { timestamp: "2026-08-19 11:30 UTC", note: "Final repair inspection confirmed: 96% quality score.", officer: "Fiscal SIURB" }
+      { timestamp: "2026-08-19 11:30 UTC", note: "Final repair inspection confirmed: 96% quality score. Incident marked Resolved.", officer: "Fiscal SIURB" }
     ],
     duplicateCount: 1,
     livenessVerified: true,
@@ -404,8 +404,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "Ukuqhekeka okukhulu kukhonkolo lwebhuloho lomgwaqo omkhulu we-M1, izingcezu ziwela ezimotweni.",
     hasAudio: true,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1590496793929-36417d3117de?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80",
     transcription: "Ukuqhekeka okukhulu kukhonkolo lwebhuloho lomgwaqo omkhulu we-M1, izingcezu ziwela ezimotweni.",
     originalTranscript: "Ukuqhekeka okukhulu kukhonkolo lwebhuloho lomgwaqo omkhulu we-M1, izingcezu ziwela ezimotweni.",
     englishTranslation: "Severe structural concrete spalling and beam shear crack on M1 highway deck; concrete chunks falling onto traffic below.",
@@ -418,10 +418,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "JRA (Johannesburg Roads Agency) Structural Emergency Task Force & JMPD",
     estimatedRepairCostUSD: 2400,
     recommendedCrewSize: 6,
-    status: "OPEN",
+    status: "Dispatched",
     resolutionQualityScore: 0,
     dispatchLogs: [
-      { timestamp: "2026-08-19 14:12 UTC", note: "Emergency lane closure ordered by JMPD traffic control.", officer: "Civic AI Core" }
+      { timestamp: "2026-08-19 14:12 UTC", note: "Emergency structural netting and lane diversion team dispatched.", officer: "Civic AI Core" }
     ],
     duplicateCount: 6,
     livenessVerified: true,
@@ -447,8 +447,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "Substation feeder cable theft caused total blackout across three business blocks. Traffic lights dead.",
     hasAudio: true,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800&auto=format&fit=crop&q=80",
     transcription: "Substation feeder cable theft caused total blackout across three business blocks. Traffic lights dead.",
     originalTranscript: "Substation feeder cable theft caused total blackout across three business blocks. Traffic lights dead.",
     englishTranslation: "Municipal substation feeder cable vandalism caused total power outage across three commercial blocks, traffic lights offline.",
@@ -461,7 +461,7 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "City Power Johannesburg Heavy Cables Emergency Unit",
     estimatedRepairCostUSD: 1100,
     recommendedCrewSize: 4,
-    status: "IN_PROGRESS",
+    status: "In Progress",
     resolutionQualityScore: 72,
     dispatchLogs: [
       { timestamp: "2026-08-19 13:00 UTC", note: "Cable re-routing crew on site; generator backup online for traffic lights.", officer: "City Power Dispatch" }
@@ -490,8 +490,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "Ipayipi lamanzi elalivuza e-Vilakazi Street selilungisiwe ngokuphelele.",
     hasAudio: false,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1584467735815-f778f274e296?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1584467735815-f778f274e296?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80",
     transcription: "Ipayipi lamanzi elalivuza e-Vilakazi Street selilungisiwe ngokuphelele.",
     originalTranscript: "Ipayipi lamanzi elalivuza e-Vilakazi Street selilungisiwe ngokuphelele.",
     englishTranslation: "Leaking municipal water connection on Vilakazi Street has been successfully excavated, re-sleeved, and backfilled.",
@@ -504,7 +504,7 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "Johannesburg Water Depot 07",
     estimatedRepairCostUSD: 180,
     recommendedCrewSize: 2,
-    status: "RESOLVED",
+    status: "Resolved",
     resolutionQualityScore: 94,
     dispatchLogs: [
       { timestamp: "2026-08-19 11:45 UTC", note: "Resolution verified by municipal water quality audit: 94%.", officer: "Inspector N. Buthelezi" }
@@ -535,8 +535,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "朝阳区建国门外大街地下高压电缆井冒烟，并伴有剧烈刺鼻焦糊味。",
     hasAudio: true,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800&auto=format&fit=crop&q=80",
     transcription: "朝阳区建国门外大街地下高压电缆井冒烟，并伴有剧烈刺鼻焦糊味。",
     originalTranscript: "朝阳区建国门外大街地下高压电缆井冒烟，并伴有剧烈刺鼻焦糊味。",
     englishTranslation: "Subsurface underground high-voltage utility conduit smoking heavily with intense electrical burning odor in Chaoyang CBD.",
@@ -549,10 +549,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "State Grid Beijing Electric Power Emergency Response Unit",
     estimatedRepairCostUSD: 950,
     recommendedCrewSize: 4,
-    status: "OPEN",
+    status: "HITL in Process",
     resolutionQualityScore: 0,
     dispatchLogs: [
-      { timestamp: "2026-08-19 13:58 UTC", note: "Thermal camera survey scheduled; grid switchgear safety lock engaged.", officer: "Civic AI Core" }
+      { timestamp: "2026-08-19 13:58 UTC", note: "Thermal camera survey scheduled; human operator validation in progress.", officer: "Civic AI Core" }
     ],
     duplicateCount: 3,
     livenessVerified: true,
@@ -578,8 +578,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "中关村南大街路面沉降约15公分，影响早晚高峰自动驾驶和公交车平稳通行。",
     hasAudio: true,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=800&auto=format&fit=crop&q=80",
     transcription: "中关村南大街路面沉降约15公分，影响早晚高峰自动驾驶和公交车平稳通行。",
     originalTranscript: "中关村南大街路面沉降约15公分，影响早晚高峰自动驾驶和公交车平稳通行。",
     englishTranslation: "Roadway subsidence of approximately 15cm detected along Zhongguancun South Street, disrupting morning transit stability.",
@@ -592,10 +592,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "Beijing Municipal Road Maintenance Engineering Bureau Team 4",
     estimatedRepairCostUSD: 600,
     recommendedCrewSize: 3,
-    status: "IN_PROGRESS",
+    status: "In Progress",
     resolutionQualityScore: 80,
     dispatchLogs: [
-      { timestamp: "2026-08-19 12:00 UTC", note: "Ground penetrating radar completed; asphalt milling underway.", officer: "Engineer Zhang" }
+      { timestamp: "2026-08-19 12:00 UTC", note: "Ground penetrating radar completed; asphalt milling crew active.", officer: "Engineer Zhang" }
     ],
     duplicateCount: 2,
     livenessVerified: true,
@@ -621,8 +621,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "王府井步行街仿古花岗岩地砖脱落松动问题已由市政工程局连夜修缮平整。",
     hasAudio: false,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80",
     transcription: "王府井步行街仿古花岗岩地砖脱落松动问题已由市政工程局连夜修缮平整。",
     originalTranscript: "王府井步行街仿古花岗岩地砖脱落松动问题已由市政工程局连夜修缮平整。",
     englishTranslation: "Loose historical granite pavers in Wangfujing pedestrian avenue have been leveled and re-grouted by municipal repair crews.",
@@ -635,10 +635,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "Dongcheng District Municipal Landscape & Pavement Office",
     estimatedRepairCostUSD: 190,
     recommendedCrewSize: 2,
-    status: "RESOLVED",
+    status: "Resolved",
     resolutionQualityScore: 98,
     dispatchLogs: [
-      { timestamp: "2026-08-19 10:15 UTC", note: "Overnight paving verified with high-precision laser level: 98%.", officer: "Supervisor Liu" }
+      { timestamp: "2026-08-19 10:15 UTC", note: "Overnight paving verified with high-precision laser level: 98%. Marked Resolved.", officer: "Supervisor Liu" }
     ],
     duplicateCount: 1,
     livenessVerified: true,
@@ -666,8 +666,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "Прорыв магистральной теплотрассы на Тверской. Кипяток под давлением заливает тротуар, нулевая видимость из-за пара!",
     hasAudio: true,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1584467735815-f778f274e296?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80",
     transcription: "Прорыв магистральной теплотрассы на Тверской. Кипяток под давлением заливает тротуар, нулевая видимость из-за пара!",
     originalTranscript: "Прорыв магистральной теплотрассы на Тверской. Кипяток под давлением заливает тротуар, нулевая видимость из-за пара!",
     englishTranslation: "Rupture of central high-pressure district steam/heating main on Tverskaya. Scalding water flooding walkway with zero visibility.",
@@ -680,10 +680,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "MOEK Emergency Thermal Brigade & EMERCOM Rescue Squadron",
     estimatedRepairCostUSD: 1800,
     recommendedCrewSize: 5,
-    status: "OPEN",
+    status: "Dispatched",
     resolutionQualityScore: 0,
     dispatchLogs: [
-      { timestamp: "2026-08-19 14:14 UTC", note: "Priority 5 alert dispatched: Thermal pipe shutoff valves activated.", officer: "Civic AI Core" }
+      { timestamp: "2026-08-19 14:14 UTC", note: "Priority 5 alert dispatched: Thermal pipe shutoff valves activated and EMERCOM unit en route.", officer: "Civic AI Core" }
     ],
     duplicateCount: 5,
     livenessVerified: true,
@@ -709,8 +709,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "Повреждение кабельной муфты уличного освещения на Арбате, мерцают и гаснут фонари.",
     hasAudio: true,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1520038410233-7141be7e6f97?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800&auto=format&fit=crop&q=80",
     transcription: "Повреждение кабельной муфты уличного освещения на Арбате, мерцают и гаснут фонари.",
     originalTranscript: "Повреждение кабельной муфты уличного освещения на Арбате, мерцают и гаснут фонари.",
     englishTranslation: "Faulty street lighting cable termination block on Arbat, erratic voltage fluctuations and dark pedestrian corridors.",
@@ -723,7 +723,7 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "Mosgorsvet Underground Cable Repair Unit",
     estimatedRepairCostUSD: 410,
     recommendedCrewSize: 3,
-    status: "IN_PROGRESS",
+    status: "In Progress",
     resolutionQualityScore: 65,
     dispatchLogs: [
       { timestamp: "2026-08-19 13:00 UTC", note: "Mosgorsvet technician replacing damaged junction box sleeve.", officer: "Dispatcher S. Smirnov" }
@@ -752,8 +752,8 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     typedComplaint: "Асфальтовое покрытие после зимнего пучения полностью восстановлено и укатано дорожными катками.",
     hasAudio: false,
     hasPhoto: true,
-    preRepairPhotoUrl: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80",
-    postRepairPhotoUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&auto=format&fit=crop&q=80",
+    preRepairPhotoUrl: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=800&auto=format&fit=crop&q=80",
+    postRepairPhotoUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&auto=format&fit=crop&q=80",
     transcription: "Асфальтовое покрытие после зимнего пучения полностью восстановлено и укатано дорожными катками.",
     originalTranscript: "Асфальтовое покрытие после зимнего пучения полностью восстановлено и укатано дорожными катками.",
     englishTranslation: "Frost heave asphalt distress has been milled, fresh hot-mix bitumen paved and compacted.",
@@ -766,10 +766,10 @@ export const INITIAL_SEED_REPORTS: CivicReport[] = [
     recommendedDispatchUnit: "GBU Avtomobilnye Dorogi Presnya Division",
     estimatedRepairCostUSD: 310,
     recommendedCrewSize: 3,
-    status: "RESOLVED",
+    status: "Resolved",
     resolutionQualityScore: 95,
     dispatchLogs: [
-      { timestamp: "2026-08-19 11:15 UTC", note: "Road surface quality scanned with high compliance score: 95%.", officer: "Engineer V. Popov" }
+      { timestamp: "2026-08-19 11:15 UTC", note: "Road surface quality scanned with high compliance score: 95%. Marked Resolved.", officer: "Engineer V. Popov" }
     ],
     duplicateCount: 1,
     livenessVerified: true,

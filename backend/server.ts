@@ -73,8 +73,9 @@ async function startServer() {
 
   // Initialize in-memory reports store with seed and persisted data
   const persisted = loadPersistedReports<CivicReport>();
-  const reportsStore: CivicReport[] =
-    persisted && persisted.length > 0 ? persisted : [...INITIAL_SEED_REPORTS];
+  const seedIds = new Set(INITIAL_SEED_REPORTS.map((r) => r.id));
+  const userReports = (persisted || []).filter((r) => !seedIds.has(r.id));
+  const reportsStore: CivicReport[] = [...userReports, ...INITIAL_SEED_REPORTS];
 
   // Mount Modular API Routers
   app.use("/api/auth", authRouter);

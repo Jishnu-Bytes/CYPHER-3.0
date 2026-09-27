@@ -302,22 +302,33 @@
       </div>
 
       <!-- 2-Second Webcam Liveness Verification Card -->
-      <div class="mt-6 bg-slate-950/70 border border-slate-800 rounded-3xl p-5 space-y-3">
+      <div id="liveness-card" class="mt-6 bg-slate-950/70 border border-slate-800 rounded-3xl p-5 space-y-3 transition-all duration-300">
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
           <div class="flex items-center space-x-3">
             <div id="liveness-status-icon" class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm border border-amber-500/30">
               <i class="fa-solid fa-user-check"></i>
             </div>
             <div>
-              <div class="flex items-center gap-2">
-                <h4 class="text-sm font-bold text-white font-display">Liveness Verification Check</h4>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h4 class="text-sm font-bold text-white font-display flex items-center gap-1.5">
+                  <span>Liveness Verification Check</span>
+                  <span class="text-rose-500 font-bold text-lg leading-none" title="Mandatory Security Step">*</span>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold uppercase tracking-wider">Mandatory *</span>
+                </h4>
                 <span id="liveness-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   PENDING 2s CHECK
                 </span>
               </div>
-              <p class="text-xs text-slate-400 font-mono">2-second live camera capture prevents submitting static downloaded IDs</p>
+              <p class="text-xs text-slate-400 font-mono mt-0.5">
+                <span class="text-rose-400 font-bold">* Required:</span> 2-second live camera capture prevents submitting static downloaded IDs. Cannot be skipped.
+              </p>
             </div>
           </div>
+        </div>
+
+        <div id="liveness-mandatory-error" class="hidden text-xs text-rose-400 font-mono bg-rose-950/50 p-3 rounded-xl border border-rose-500/40 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400 text-sm"></i>
+          <span>Biometric Liveness Verification is mandatory (*). You must complete the 2-second live presence check before verifying your identity.</span>
         </div>
 
         <!-- Liveness Video Feed Stage -->
@@ -770,6 +781,11 @@
       document.getElementById('liveness-confirmed-box').classList.remove('hidden');
       document.getElementById('liveness-actions').classList.add('hidden');
 
+      const errNotice = document.getElementById('liveness-mandatory-error');
+      if (errNotice) errNotice.classList.add('hidden');
+      const livenessCard = document.getElementById('liveness-card');
+      if (livenessCard) livenessCard.classList.remove('ring-2', 'ring-rose-500');
+
       isLivenessVerified = true;
       livenessToken = 'LIVE-AUTH-' + Math.random().toString(36).substring(2, 9).toUpperCase();
 
@@ -827,7 +843,25 @@
     }
 
     async function submitVerification() {
-      if (!selectedFile) return;
+      if (!selectedFile) {
+        alert("Please upload or capture a government ID document photo first.");
+        return;
+      }
+
+      // Mandatory Liveness Verification Check (*) - Cannot be skipped
+      if (!isLivenessVerified) {
+        const livenessCard = document.getElementById('liveness-card');
+        if (livenessCard) {
+          livenessCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          livenessCard.classList.add('ring-2', 'ring-rose-500');
+        }
+        const errNotice = document.getElementById('liveness-mandatory-error');
+        if (errNotice) {
+          errNotice.classList.remove('hidden');
+        }
+        alert("⚠️ Liveness Verification is mandatory (*).\n\nPlease complete the 2-second biometric check before submitting your document.");
+        return;
+      }
 
       const btn = document.getElementById('btn-verify');
       const btnText = document.getElementById('btn-verify-text');

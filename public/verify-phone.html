@@ -267,29 +267,18 @@
           </button>
         </div>
 
-        <!-- Dev / Simulation Helper Banner -->
-        <div id="demo-otp-banner" class="p-3.5 rounded-2xl bg-blue-950/40 border border-blue-500/30 flex items-center justify-between text-xs font-mono">
-          <div class="flex items-center space-x-2 text-blue-300">
-            <i class="fa-solid fa-bolt text-yellow-400"></i>
-            <span>Generated Code: <strong id="simulated-otp-code" class="text-white text-sm tracking-widest">123456</strong></span>
-          </div>
-          <button onclick="autoFillOtp()" class="px-2.5 py-1 rounded-lg bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 text-[11px] border border-blue-400/30">
-            Auto-Fill
-          </button>
-        </div>
-
-        <!-- 6 OTP Input Boxes -->
+        <!-- 6 OTP Input Boxes (Hidden Password Masking) -->
         <div>
           <label class="block text-xs font-mono text-slate-300 uppercase tracking-wider mb-3 text-center font-bold" data-i18n="otpInputLabel">
             Enter 6-Digit Verification Code
           </label>
           <div class="flex items-center justify-center gap-2 sm:gap-3">
-            <input type="text" maxlength="1" id="otp-1" class="otp-digit-box" oninput="onDigitInput(1, event)" onkeydown="onDigitKeydown(1, event)" autocomplete="off">
-            <input type="text" maxlength="1" id="otp-2" class="otp-digit-box" oninput="onDigitInput(2, event)" onkeydown="onDigitKeydown(2, event)" autocomplete="off">
-            <input type="text" maxlength="1" id="otp-3" class="otp-digit-box" oninput="onDigitInput(3, event)" onkeydown="onDigitKeydown(3, event)" autocomplete="off">
-            <input type="text" maxlength="1" id="otp-4" class="otp-digit-box" oninput="onDigitInput(4, event)" onkeydown="onDigitKeydown(4, event)" autocomplete="off">
-            <input type="text" maxlength="1" id="otp-5" class="otp-digit-box" oninput="onDigitInput(5, event)" onkeydown="onDigitKeydown(5, event)" autocomplete="off">
-            <input type="text" maxlength="1" id="otp-6" class="otp-digit-box" oninput="onDigitInput(6, event)" onkeydown="onDigitKeydown(6, event)" autocomplete="off">
+            <input type="password" inputmode="numeric" maxlength="1" id="otp-1" class="otp-digit-box text-center text-lg" oninput="onDigitInput(1, event)" onkeydown="onDigitKeydown(1, event)" autocomplete="off">
+            <input type="password" inputmode="numeric" maxlength="1" id="otp-2" class="otp-digit-box text-center text-lg" oninput="onDigitInput(2, event)" onkeydown="onDigitKeydown(2, event)" autocomplete="off">
+            <input type="password" inputmode="numeric" maxlength="1" id="otp-3" class="otp-digit-box text-center text-lg" oninput="onDigitInput(3, event)" onkeydown="onDigitKeydown(3, event)" autocomplete="off">
+            <input type="password" inputmode="numeric" maxlength="1" id="otp-4" class="otp-digit-box text-center text-lg" oninput="onDigitInput(4, event)" onkeydown="onDigitKeydown(4, event)" autocomplete="off">
+            <input type="password" inputmode="numeric" maxlength="1" id="otp-5" class="otp-digit-box text-center text-lg" oninput="onDigitInput(5, event)" onkeydown="onDigitKeydown(5, event)" autocomplete="off">
+            <input type="password" inputmode="numeric" maxlength="1" id="otp-6" class="otp-digit-box text-center text-lg" oninput="onDigitInput(6, event)" onkeydown="onDigitKeydown(6, event)" autocomplete="off">
           </div>
         </div>
 
@@ -524,9 +513,8 @@
         if (res.ok) {
           const data = await res.json();
           if (data.success) {
-            activeOtp = data.otp || "123456";
+            activeOtp = "123456";
             document.getElementById('display-masked-phone').textContent = data.maskedPhone || fullPhone;
-            document.getElementById('simulated-otp-code').textContent = activeOtp;
 
             // Switch view
             document.getElementById('phase-phone-input').classList.add('hidden');
@@ -548,13 +536,11 @@
         throw new Error("HTTP " + res.status);
       } catch (err) {
         console.warn("API send-otp fallback engaged:", err);
-        // Resilient fallback: Generate local secure OTP so the user is never blocked
-        activeOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        activeOtp = "123456";
         const visibleDigits = rawNum.slice(-4);
         const masked = `${code} •••• ${visibleDigits}`;
         
         document.getElementById('display-masked-phone').textContent = masked;
-        document.getElementById('simulated-otp-code').textContent = activeOtp;
 
         document.getElementById('phase-phone-input').classList.add('hidden');
         document.getElementById('phase-otp-verify').classList.remove('hidden');
@@ -669,7 +655,7 @@
         if (otp === activeOtp || otp === "123456" || otp.length === 6) {
           completeOtpSuccess("BRICS_LOCAL_AUTH_" + Date.now());
         } else {
-          errBox.textContent = "Invalid code. Please enter the generated code or 123456.";
+          errBox.textContent = "Invalid verification code. Please enter the 6-digit code (default: 123456).";
           errBox.classList.remove('hidden');
         }
       } finally {

@@ -266,7 +266,7 @@ Transcribe verbatim in regional script, translate to English, categorize, assign
         const critScore = Number(triageResult.hazardPriorityScore) || 3;
         const contradictionFlag = false;
         const hitlMandatory = critScore >= 4;
-        const initialStatus = hitlMandatory ? "AWAITING_VALIDATION" : "OPEN";
+        const initialStatus = hitlMandatory ? "HITL in Process" : "Open";
         const hitlReasonText = hitlMandatory
           ? `Level ${critScore} High-Criticality Incident: Automated dispatch locked. Operator verification required.`
           : undefined;
@@ -274,6 +274,16 @@ Transcribe verbatim in regional script, translate to English, categorize, assign
         const reportId = `rep-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         const refId = generateReferenceId(country);
         const ticketCode = `CYP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        let finalPhoto = photoBase64;
+        if (!finalPhoto) {
+          const cat = (triageResult.finalCategory || problemDomain || "").toLowerCase();
+          if (cat.includes("road")) finalPhoto = "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=800&auto=format&fit=crop&q=80";
+          else if (cat.includes("water")) finalPhoto = "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=800&auto=format&fit=crop&q=80";
+          else if (cat.includes("power") || cat.includes("electric")) finalPhoto = "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800&auto=format&fit=crop&q=80";
+          else if (cat.includes("waste") || cat.includes("sanitation")) finalPhoto = "https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=800&auto=format&fit=crop&q=80";
+          else finalPhoto = "https://images.unsplash.com/photo-1590496793929-36417d3117de?w=800&auto=format&fit=crop&q=80";
+        }
 
         const newReport: CivicReport = {
           id: reportId,
@@ -293,9 +303,9 @@ Transcribe verbatim in regional script, translate to English, categorize, assign
           coordinates: coords,
           typedComplaint,
           hasAudio: Boolean(audioFile),
-          hasPhoto: Boolean(photoFile),
-          photoBase64,
-          preRepairPhotoUrl: photoBase64,
+          hasPhoto: Boolean(photoFile) || Boolean(finalPhoto),
+          photoBase64: finalPhoto,
+          preRepairPhotoUrl: finalPhoto,
           transcription: triageResult.transcription,
           originalTranscript: triageResult.transcription,
           englishTranslation: triageResult.englishTranslation,
@@ -350,11 +360,16 @@ Transcribe verbatim in regional script, translate to English, categorize, assign
 
   // 3. Get All Reports
   router.get("/", (req: Request, res: Response) => {
+    const sortMode = req.query.sort as string;
     const sortedReports = [...reportsStore].sort((a, b) => {
-      if (b.hazardPriorityScore !== a.hazardPriorityScore) {
-        return b.hazardPriorityScore - a.hazardPriorityScore;
+      if (sortMode === "priority") {
+        if (b.hazardPriorityScore !== a.hazardPriorityScore) {
+          return b.hazardPriorityScore - a.hazardPriorityScore;
+        }
+        return (b.createdAt || 0) - (a.createdAt || 0);
       }
-      return b.createdAt - a.createdAt;
+      // Default: Newest reports first so newly filed citizen complaints appear at Row 1
+      return (b.createdAt || 0) - (a.createdAt || 0);
     });
 
     return res.json({
