@@ -25,7 +25,7 @@ export const GoogleDarkMapCanvas: React.FC<GoogleDarkMapCanvasProps> = ({
   selectedIncidentId,
   onSelectIncident,
   activeFilter,
-  themeMode = 'dark'
+  themeMode = 'light'
 }) => {
   const [mapType, setMapType] = useState<'vector' | 'satellite' | 'terrain'>('vector');
   const [zoomLevel, setZoomLevel] = useState<number>(14);
@@ -33,9 +33,9 @@ export const GoogleDarkMapCanvas: React.FC<GoogleDarkMapCanvasProps> = ({
 
   const isDark = themeMode === 'dark';
 
-  // Dynamic Theme Colors according to Specification:
+  // Dynamic Theme Colors:
   // Dark: Land #242f3e, Water #17263c, Roads #38414e | Accents: #FF5252, #00E5FF, #FFC107
-  // Light: Land #f5f5f5, Water #c9e8e5, Roads #ffffff | Accents: #D32F2F, #1976D2, #F57C00
+  // Light (Google Maps Bright): Land #f2efe9, Water #aadaff, Roads #ffffff, Highways #fde047, Parks #cceada
   const themeColors = isDark
     ? {
         land: '#242f3e',
@@ -43,6 +43,7 @@ export const GoogleDarkMapCanvas: React.FC<GoogleDarkMapCanvasProps> = ({
         waterBorder: '#1d304a',
         roads: '#38414e',
         minorRoads: '#2c3545',
+        highway: '#475569',
         blocks: '#1f2735',
         parks: '#1b2836',
         textRoads: '#8d9aa9',
@@ -54,17 +55,18 @@ export const GoogleDarkMapCanvas: React.FC<GoogleDarkMapCanvasProps> = ({
         hudText: 'text-slate-200'
       }
     : {
-        land: '#f5f5f5',
-        water: '#c9e8e5',
-        waterBorder: '#a5d5d0',
+        land: '#f2efe9',
+        water: '#aadaff',
+        waterBorder: '#83c2fc',
         roads: '#ffffff',
-        minorRoads: '#e2e8f0',
-        blocks: '#e5e7eb',
-        parks: '#dcfce7',
-        textRoads: '#475569',
-        accent1: '#D32F2F',
-        accent2: '#1976D2',
-        accent3: '#F57C00',
+        minorRoads: '#f8fafc',
+        highway: '#fde047',
+        blocks: '#e8e4dc',
+        parks: '#cceada',
+        textRoads: '#3c4043',
+        accent1: '#ef4444',
+        accent2: '#0284c7',
+        accent3: '#f59e0b',
         hudBg: 'bg-white/95',
         hudBorder: 'border-slate-300',
         hudText: 'text-slate-800'
@@ -236,17 +238,17 @@ export const GoogleDarkMapCanvas: React.FC<GoogleDarkMapCanvasProps> = ({
           <path 
             d="M 50,0 C 180,180 340,320 540,350 C 720,380 880,500 980,650" 
             fill="none" 
-            stroke={themeColors.roads} 
+            stroke={isDark ? themeColors.roads : themeColors.highway} 
             strokeWidth="14" 
             strokeLinecap="round" 
           />
           <path 
             d="M 50,0 C 180,180 340,320 540,350 C 720,380 880,500 980,650" 
             fill="none" 
-            stroke={themeColors.accent3} 
-            strokeWidth="2.5" 
+            stroke={isDark ? themeColors.accent3 : '#f97316'} 
+            strokeWidth="3" 
             strokeDasharray="14 10" 
-            opacity="0.8"
+            opacity="0.85"
           />
           <text x="320" y="270" fill={themeColors.textRoads} fontSize="11" fontFamily="Roboto, sans-serif" transform="rotate(35, 320, 270)">
             OUTER RING ROAD (ORR)

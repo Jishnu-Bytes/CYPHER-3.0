@@ -26,9 +26,9 @@ export const GisCommandCenter: React.FC<GisCommandCenterProps> = ({
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
     try {
       const saved = localStorage.getItem('cypher_theme_mode');
-      return (saved === 'light' || saved === 'dark') ? saved : 'dark';
+      return (saved === 'light' || saved === 'dark') ? saved : 'light';
     } catch {
-      return 'dark';
+      return 'light';
     }
   });
 
