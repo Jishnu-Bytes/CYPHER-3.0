@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)[![React](https://img.shields.io/badge/React-19.0-61dafb.svg)](https://react.dev/)[![Gemini 2.5 Flash](https://img.shields.io/badge/Gemini-2.5%20Flash-orange.svg)](https://ai.google.dev/)[![Socket.io](https://img.shields.io/badge/Socket.io-Sub--50ms-black.svg)](https://socket.io/)[![Offline PWA / IndexedDB](https://img.shields.io/badge/IndexedDB-Offline--First-purple.svg)](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)**CYPHER-3.0** is an enterprise, sovereign civic incident reporting, multimodal AI triage, and real-time municipal emergency dispatch system engineered for BRICS+ .It bridges the critical gap between chaotic citizen distress signals (vernacular voice recordings, photographic evidence, and location coordinates) and structured tactical emergency crews through cross-modal intelligence, strict human-in-the-loop safety gating, geospatial deduplication, and an offline-first storage buffer.
 
 ## 🏛️ System Architecture & Folder Structure
-CYPHER-3.0/
+
 ├── backend/                             # Sovereign Backend Services & API Routing
 │   ├── config/                          # Municipal Models, Tool Declarations & Security
 │   │   ├── models.ts                    # Gemini 2.0 Flash standard model identifiers
@@ -52,9 +52,6 @@ CYPHER-3.0/
 │   ├── main.tsx                         # React 19 client bootstrap entry point
 │   └── types.ts                         # Frontend data models & theme types
 └── package.json                         # Scripts & full-stack dependencies
-
----
-
 ## ⚡ Core Innovations & Production Safeguards
 
 ### 1. Token-Cost Mitigation Pipeline (Gemini 2.0 Flash)
